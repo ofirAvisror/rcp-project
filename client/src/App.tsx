@@ -1,15 +1,16 @@
 import { Header } from "@/components/Header";
 import { AuthPage } from "@/components/AuthPage";
 import { useAuth } from "./components/AuthContext";
-import { PostsPage } from "./components/PostsPage";
+import {BooksPages } from "./components/BooksPage";
 
+// test test
 function App() {
   const { user } = useAuth();
 
   return (
 <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-700 to-pink-500">
       <Header />
-      <main className="p-6">{user ? <PostsPage /> : <AuthPage />}</main>
+      <main className="p-6">{user ? <BooksPages /> : <AuthPage />}</main>
     </div>
   );
 }
