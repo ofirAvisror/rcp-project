@@ -8,51 +8,66 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 
-const createPostSchema = z.object({
+// סכמת ולידציה לספר חדש
+const createBookSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
+  author: z.string().min(1, "Author ID is required"),
+  publishedYear: z
+    .string()
+    .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
+  genres: z.string().min(1, "Genres are required (comma-separated)"),
 });
 
-type CreatePostFormData = z.infer<typeof createPostSchema>;
+type CreateBookFormData = z.infer<typeof createBookSchema>;
 
-export function CreatePostForm() {
+export function CreateBookForm() {
   const queryClient = useQueryClient();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const form = useForm<CreatePostFormData>({
-    resolver: zodResolver(createPostSchema),
-    defaultValues: { title: "", content: "" },
+  const form = useForm<CreateBookFormData>({
+    resolver: zodResolver(createBookSchema),
+    defaultValues: {
+      title: "",
+      author: "",
+      publishedYear: "",
+      genres: "",
+    },
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: CreatePostFormData) => {
-      const res = await fetch("http://localhost:3001/api/posts", {
+    mutationFn: async (data: CreateBookFormData) => {
+      const res = await fetch("http://localhost:3001/api/books", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          title: data.title,
+          author: data.author,
+          publishedYear: Number(data.publishedYear),
+          genres: data.genres.split(",").map((g) => g.trim()),
+        }),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to create post");
+        throw new Error(errorData.message || "Failed to create book");
       }
+
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["books"] });
       form.reset();
-      setSuccessMessage("✅ Post created successfully!");
+      setSuccessMessage("✅ Book created successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
     },
     onError: (error: any) => {
       setSuccessMessage(null);
       form.setError("title", { type: "manual", message: error.message });
-      form.setError("content", { type: "manual", message: error.message });
     },
   });
 
-  const onSubmit = async (data: CreatePostFormData) => {
+  const onSubmit = (data: CreateBookFormData) => {
     mutation.mutate(data);
   };
 
@@ -61,7 +76,7 @@ export function CreatePostForm() {
       <div className="flex items-center justify-center gap-3 mb-6">
         <Sparkles className="text-indigo-500 dark:text-pink-400" />
         <h2 className="text-3xl font-extrabold text-gray-800 dark:text-white text-center">
-          Share Something New
+          Add a New Book
         </h2>
       </div>
 
@@ -75,14 +90,28 @@ export function CreatePostForm() {
             name="title"
             label="Title"
             type="text"
-            placeholder="Give your post a catchy title"
+            placeholder="Book title"
           />
           <FormFieldWrapper
             control={form.control}
-            name="content"
-            label="Content"
-            type="textarea"
-            placeholder="Write your thoughts here..."
+            name="author"
+            label="Author ID"
+            type="text"
+            placeholder="Author ID (MongoDB ObjectId)"
+          />
+          <FormFieldWrapper
+            control={form.control}
+            name="publishedYear"
+            label="Published Year"
+            type="text"
+            placeholder="2023"
+          />
+          <FormFieldWrapper
+            control={form.control}
+            name="genres"
+            label="Genres"
+            type="text"
+            placeholder="comma,separated,genres"
           />
 
           <Button
@@ -90,7 +119,7 @@ export function CreatePostForm() {
             disabled={mutation.isPending}
             className="w-full text-base font-semibold tracking-wide py-3 rounded-full"
           >
-            {mutation.isPending ? "Publishing..." : "Publish Post 🚀"}
+            {mutation.isPending ? "Adding..." : "Add Book 📚"}
           </Button>
 
           {successMessage && (
