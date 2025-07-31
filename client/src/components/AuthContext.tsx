@@ -1,32 +1,38 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import axios from "axios";
 
 type User = {
   userId: string;
-  email: string;
   name: string;
+  email: string;
   createdAt: string;
 };
 
 type AuthContextType = {
   user: User | null;
-  login: (userData: User) => void;
-  logout: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3001/api/auth/me", { withCredentials: true })
+      .then((res) => setUser(res.data.user))
+      .catch(() => setUser(null));
+  }, []);
 
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await axios.post("http://localhost:3001/api/auth/logout", {}, { withCredentials: true });
     setUser(null);
     localStorage.removeItem("user");
   };
