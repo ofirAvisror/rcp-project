@@ -32,7 +32,8 @@ type Recipe = {
     name: string;
   };
   publishedYear: number;
-  genres: string[];
+  categories: string[]; // שים לב: categories במקום genres
+  description?: string; // אופציונלי
   addedBy: {
     _id: string;
     name: string;
@@ -134,7 +135,7 @@ export function RecipesPage() {
                   · {recipe.publishedYear}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
-                  Categories: {recipe.genres.join(", ")}
+                  Categories: {(recipe.categories ?? []).join(", ")}
                 </p>
               </div>
 
@@ -189,7 +190,10 @@ export function RecipesPage() {
             <DialogHeader>
               <DialogTitle>Edit Recipe</DialogTitle>
             </DialogHeader>
-            <CreateRecipeForm recipe={editingRecipe} onClose={() => setEditingRecipe(null)} />
+            <CreateRecipeForm
+              recipe={editingRecipe}
+              onClose={() => setEditingRecipe(null)}
+            />
           </DialogContent>
         </Dialog>
       )}
