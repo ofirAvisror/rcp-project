@@ -7,7 +7,10 @@ export function Header() {
   return (
     <header className="w-full px-6 py-4 bg-gradient-to-r from-purple-700 via-pink-500 to-red-400 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 text-white shadow-xl flex items-center justify-between">
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-mono">
-        🚀 <span className="text-white drop-shadow-sm">Auth Portal</span>
+        🚀{" "}
+        <span className="text-white drop-shadow-sm">
+          chef recepies for everyone to share!
+        </span>
       </h1>
 
       {user ? (
