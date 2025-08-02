@@ -40,19 +40,18 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         body: JSON.stringify(data),
       });
 
+      const responseData = await res.json(); // ← לקרוא פעם אחת בלבד
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Registration failed");
+        throw new Error(responseData.message || "Registration failed");
       }
 
-      const responseData = await res.json();
       const { user } = responseData;
-
       login({
         userId: user.id,
         name: user.name,
         email: user.email,
         createdAt: user.createdAt,
+        role: user.role,
       });
 
       form.reset();
