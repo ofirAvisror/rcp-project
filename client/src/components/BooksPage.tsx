@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "./AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,10 @@ type Book = {
   };
   publishedYear: number;
   genres: string[];
+  addedBy: {
+    _id: string;
+    name: string;
+  };
 };
 
 export function BooksPage() {
@@ -56,7 +61,7 @@ export function BooksPage() {
         throw new Error((await res.json()).message || "Failed to fetch books");
 
       const json = await res.json();
-      return Array.isArray(json.books) ? json.books : [];
+      return json.data;
     },
     enabled: !!user,
   });
@@ -122,7 +127,7 @@ export function BooksPage() {
                   {book.title}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  ✍️{" "}
+                  ✍️ {" "}
                   <span className="font-semibold text-indigo-600 dark:text-indigo-400">
                     {book.author.name}
                   </span>{" "}
@@ -133,7 +138,7 @@ export function BooksPage() {
                 </p>
               </div>
 
-              {user?.role === "admin" && (
+              {(user?.role === "admin" || user?.userId === book.addedBy._id) && (
                 <div className="absolute top-4 right-4 flex gap-2">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

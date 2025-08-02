@@ -11,7 +11,7 @@ const BookController = {
 
       let bookAuthor;
 
-      // בדיקה אם השדה author הוא ObjectId
+      // בדיקה אם author הוא ObjectId
       if (/^[0-9a-fA-F]{24}$/.test(author)) {
         bookAuthor = await Author.findById(author);
       }
@@ -26,13 +26,10 @@ const BookController = {
         }
       }
 
-      // בדיקה שהמשתמש קיים
+      // בדיקת המשתמש המחובר
       const user = await User.findById(req.user?.userId);
       if (!user) {
-        res.status(400).json({
-          success: false,
-          message: "User not found",
-        });
+        res.status(400).json({ success: false, message: "User not found" });
         return;
       }
 
@@ -68,17 +65,9 @@ const BookController = {
         .populate('author', 'name')
         .populate('addedBy', 'name');
 
-      if (!books.length) {
-        res.status(404).json({
-          success: false,
-          message: 'No books found, add some',
-        });
-        return;
-      }
-
       res.status(200).json({
         success: true,
-        books, // 🔥 חשוב - המפתח הנכון עבור ה-Frontend
+        data: books, // ✅ כך זה יתאים לקוד שלך ב־BooksPage
       });
     } catch (error) {
       console.error('Error fetching books:', error);
@@ -96,7 +85,7 @@ const BookController = {
       if (!id) {
         res.status(404).json({
           success: false,
-          message: `Book With id: ${id} Not Found`,
+          message: `Book with id: ${id} not found`,
         });
         return;
       }
