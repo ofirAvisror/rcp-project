@@ -8,10 +8,8 @@ const router = express.Router();
 // Authentication routes
 router.post('/', authenticateToken, BookController.create);
 router.get('/all', BookController.getAllBooks)
+router.patch("/:id", authenticateToken, BookController.updateBook);
 
-
-// router.get('/:id', BookController.findAuthor)
-// router.patch('/:id', BookController.updateAuthor)
 router.delete('/:id', authenticateToken, validateBookOwner, BookController.deleteBook)
 
 export default router; 
