@@ -52,11 +52,11 @@ export function BooksPage() {
       const res = await fetch("http://localhost:3001/api/books/all", {
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.json()).message || "Failed to fetch books");
+      if (!res.ok)
+        throw new Error((await res.json()).message || "Failed to fetch books");
 
-      // ✅ תיקון כאן - מחלץ את books מתוך האובייקט שהשרת מחזיר
-      const data = await res.json();
-      return data.books;
+      const json = await res.json();
+      return Array.isArray(json.books) ? json.books : [];
     },
     enabled: !!user,
   });
@@ -68,7 +68,8 @@ export function BooksPage() {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.json()).message || "Failed to delete book");
+      if (!res.ok)
+        throw new Error((await res.json()).message || "Failed to delete book");
       queryClient.invalidateQueries({ queryKey: ["books"] });
       setBookToDelete(null);
     } catch (err: any) {

@@ -3,193 +3,118 @@ import { AuthRequest } from '../middleware/auth';
 import BookModel from '../models/Book';
 import Author from '../models/Author';
 import User from '../models/User';
+
 const BookController = {
   async create(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { title, author, publishedYear, genres } = req.body
+      const { title, author, publishedYear, genres } = req.body;
 
-      // Find and Validate Author
-      const bookAuthor = await Author.findById(author);
+      let bookAuthor;
 
-      if (!bookAuthor) {
-        res.status(400).json({
-          success: false,
-          message: "error"
-        })
-        return
+      // בדיקה אם השדה author הוא ObjectId
+      if (/^[0-9a-fA-F]{24}$/.test(author)) {
+        bookAuthor = await Author.findById(author);
       }
 
-      // Find user who careat it
-      const user = await User.findById(req.user?.userId);
+      // אם לא נמצא לפי ID – ננסה לפי שם
+      if (!bookAuthor) {
+        bookAuthor = await Author.findOne({ name: author });
 
+        // אם לא קיים בכלל – ניצור חדש
+        if (!bookAuthor) {
+          bookAuthor = await Author.create({ name: author });
+        }
+      }
+
+      // בדיקה שהמשתמש קיים
+      const user = await User.findById(req.user?.userId);
       if (!user) {
         res.status(400).json({
           success: false,
-          message: "error"
-        })
-        return
+          message: "User not found",
+        });
+        return;
       }
 
+      // יצירת ספר חדש
       const newBook = await BookModel.create({
         title,
         author: bookAuthor._id,
         publishedYear,
         genres,
-        addedBy: user._id
-      })
+        addedBy: user._id,
+      });
 
-      // Populate author and user details
       const populatedBook = await BookModel.findById(newBook._id)
-        .populate('author')
-        .populate('addedBy', 'name')
+        .populate('author', 'name')
+        .populate('addedBy', 'name');
 
       res.status(201).json({
         success: true,
-        data: populatedBook
+        data: populatedBook,
       });
     } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: 'Server error during registration', error });
+      console.error('Create book error:', error);
+      res.status(500).json({
+        message: 'Server error during book creation',
+        error,
+      });
     }
   },
 
-  // async findAuthor(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     const { id } = req.params
-
-  //     const author = await BookModel.findById(id)
-
-  //     if (!author) {
-  //       res.status(404).json({
-  //         success: false,
-  //         message: `Author With id: ${id} Not Found`
-  //       })
-  //       return
-  //     }
-
-  //     res.json({
-  //       success: true,
-  //       data: author
-  //     })
-  //   } catch (error) {
-  //     console.error('Registration error:', error);
-  //     res.status(500).json({ message: 'Server error during registration', error });
-  //   }
-  // },
-
-  // async findAll(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     const authors = await BookModel.find({})
-
-  //     if (!authors.length) {
-  //       res.status(404).json({
-  //         success: false,
-  //         message: `No Authors foudn, add some`
-  //       })
-  //       return
-  //     }
-
-  //     res.json({
-  //       success: true,
-  //       data: authors
-  //     })
-  //   } catch (error) {
-  //     console.error('Registration error:', error);
-  //     res.status(500).json({ message: 'Server error during registration', error });
-  //   }
-  // },
-
-  // async updateAuthor(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     const { id } = req.params
-  //     const { name, birthYear, bio } = req.body
-
-  //     if (!name && !birthYear && !bio) {
-  //       res.status(400).json({
-  //         success: false,
-  //         message: `At leat on field is required`
-  //       })
-  //       return
-  //     }
-
-  //     const upadtedAuthor = await BookModel.findByIdAndUpdate(id, {
-  //       name, birthYear, bio
-  //     }, { new: true})
-
-  //     if (!upadtedAuthor) {
-  //       res.status(404).json({
-  //         success: false,
-  //         message: `Author With id: ${id} Not Found`
-  //       })
-  //       return
-  //     }
-
-  //     res.json({
-  //       success: true,
-  //       data: upadtedAuthor
-  //     })
-  //   } catch (error) {
-  //     console.error('Registration error:', error);
-  //     res.status(500).json({ message: 'Server error during registration', error });
-  //   }
-  // },
   async getAllBooks(req: Request, res: Response): Promise<void> {
     try {
-      const books = await BookModel.aggregate([
-        {
-          $match: {
-            publishedYear: {$gte: 2023} 
-          }
-        }, 
-        {
-          $project: {
-            title: 1,
-            nameUpper: { $toUpper: '$title' }
-          }
-        }
-      ]);
+      const books = await BookModel.find()
+        .populate('author', 'name')
+        .populate('addedBy', 'name');
 
       if (!books.length) {
         res.status(404).json({
           success: false,
-          message: 'No books found, add some'
+          message: 'No books found, add some',
         });
         return;
       }
 
-      res.json({
+      res.status(200).json({
         success: true,
-        data: books
+        books, // 🔥 חשוב - המפתח הנכון עבור ה-Frontend
       });
     } catch (error) {
       console.error('Error fetching books:', error);
-      res.status(500).json({ message: 'Server error during fetching books', error });
+      res.status(500).json({
+        message: 'Server error during fetching books',
+        error,
+      });
     }
   },
 
   async deleteBook(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params
+      const { id } = req.params;
 
       if (!id) {
         res.status(404).json({
           success: false,
-          message: `Book With id: ${id} Not Found`
-        })
-        return
+          message: `Book With id: ${id} Not Found`,
+        });
+        return;
       }
 
-      await BookModel.findOneAndDelete({ _id: id })
+      await BookModel.findOneAndDelete({ _id: id });
 
       res.json({
         success: true,
-        message: `Book with id: ${id} Delete, R.I.P`
-      })
+        message: `Book with id: ${id} deleted.`,
+      });
     } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: 'Server error during registration', error });
+      console.error('Delete book error:', error);
+      res.status(500).json({
+        message: 'Server error during deletion',
+        error,
+      });
     }
   },
 };
 
-export default BookController; 
+export default BookController;
