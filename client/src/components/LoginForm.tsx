@@ -47,7 +47,9 @@ login({
   name: user.name,
   email: user.email,
   createdAt: user.createdAt,
+  role: user.role, // ← הוספה חשובה
 });
+
 
       form.reset();
     } catch (error: any) {
