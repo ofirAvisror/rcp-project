@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreateBookForm } from "./CreateBookForm";
 
 import { Button } from "@/components/ui/button";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Pencil, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -43,6 +43,7 @@ export function BooksPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [bookToDelete, setBookToDelete] = useState<string | null>(null);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
 
   const {
     data: books,
@@ -139,6 +140,16 @@ export function BooksPage() {
 
               {user?.userId === book.addedBy._id && (
                 <div className="absolute top-4 right-4 flex gap-2">
+                  {/* כפתור עריכה */}
+                  <Button
+                    variant="ghost"
+                    onClick={() => setEditingBook(book)}
+                    className="bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900 text-yellow-700 dark:text-yellow-400 rounded-full p-2"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+
+                  {/* כפתור מחיקה */}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -169,6 +180,18 @@ export function BooksPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Dialog לעריכה */}
+      {editingBook && (
+        <Dialog open={!!editingBook} onOpenChange={() => setEditingBook(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Book</DialogTitle>
+            </DialogHeader>
+            <CreateBookForm book={editingBook} onClose={() => setEditingBook(null)} />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
