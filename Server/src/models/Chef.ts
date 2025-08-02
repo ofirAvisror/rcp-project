@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose'
-import Book from './Book'
+import Book from './Recipe'
 
 interface IAuthor extends Document {
 _id: mongoose.Types.ObjectId;

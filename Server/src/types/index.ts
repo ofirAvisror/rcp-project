@@ -8,14 +8,15 @@ export interface User {
   createdAt: Date;
 }
 
-export interface Book {
+export interface Recipe {
   id: string;
   title: string;
-  author: string;
+  chef: string;          // מזהה של שף
   description: string;
   publishedYear: number;
+  categories: string[];  // במקום genres, אפשר לקרוא קטגוריות
   createdAt: Date;
-  userId: string;
+  userId: string;        // מי הוסיף את המתכון
 }
 
 export interface LoginRequest {
@@ -34,16 +35,18 @@ export interface AuthPayload {
   email: string;
 }
 
-export interface CreateBookRequest {
+export interface CreateRecipeRequest {
   title: string;
-  author: string;
+  chef: string;
   description: string;
   publishedYear: number;
+  categories: string[];
 }
 
-export interface UpdateBookRequest {
+export interface UpdateRecipeRequest {
   title?: string;
-  author?: string;
+  chef?: string;
   description?: string;
   publishedYear?: number;
-} 
+  categories?: string[];
+}
