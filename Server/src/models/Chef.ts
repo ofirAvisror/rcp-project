@@ -1,51 +1,49 @@
-import mongoose, { Document, Schema } from 'mongoose'
-import Book from './Recipe'
+import mongoose, { Document, Schema } from 'mongoose';
+import Recipe from './Recipe';  // ייבוא מודל Recipe
 
-interface IAuthor extends Document {
-_id: mongoose.Types.ObjectId;
-name: string,
-  bio: string,
-  birthYear: number,
+interface IChef extends Document {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  bio: string;
+  birthYear: number;
   createdAt: Date;
   updatedAt: Date;
 
-  // Custom Methods
-  log: () => void
+  log: () => void;
 }
 
-const authorSchema = new Schema<IAuthor>({
+const chefSchema = new Schema<IChef>({
   name: {
     type: String,
-    require: true, 
-    unique: true
+    required: true,
+    unique: true,
   },
   bio: String,
   birthYear: {
     type: Number,
-    require: true, 
+    required: true,
   },
-},{
+}, {
   timestamps: true,
   toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-})
+  toObject: { virtuals: true },
+});
 
-authorSchema.virtual('books', {
-  ref: "Book",
+chefSchema.virtual('recipes', {
+  ref: "Recipe",
   localField: "_id",
-  foreignField: "author"
+  foreignField: "chef",
 });
 
-
-authorSchema.pre(/delete/i, async function (this: any, next) {
+chefSchema.pre(/delete/i, async function (this: any, next) {
   const docId = this.getQuery()._id;
-  await Book.deleteMany({ author: docId });
-  next()
+  await Recipe.deleteMany({ chef: docId });
+  next();
 });
 
-authorSchema.methods.log = function () {
+chefSchema.methods.log = function () {
   console.log(`[INSTANCE LOG] ${this._id}`);
-}
+};
 
-const Author = mongoose.model<IAuthor>("Author", authorSchema)
-export default Author;
+const Chef = mongoose.model<IChef>("Chef", chefSchema);
+export default Chef;
