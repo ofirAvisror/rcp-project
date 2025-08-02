@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
-// סכמת ולידציה לספר חדש
 const createBookSchema = z.object({
   title: z.string().min(1, "Title is required"),
   author: z.string().min(1, "Author name is required"),
@@ -20,7 +19,21 @@ const createBookSchema = z.object({
 
 type CreateBookFormData = z.infer<typeof createBookSchema>;
 
-export function CreateBookForm() {
+type Book = {
+  _id: string;
+  title: string;
+  author: { _id: string; name: string };
+  publishedYear: number;
+  genres: string[];
+  addedBy: { _id: string; name: string };
+};
+
+type Props = {
+  book?: Book;
+  onClose?: () => void;
+};
+
+export function CreateBookForm({ book, onClose }: Props) {
   const queryClient = useQueryClient();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -34,15 +47,31 @@ export function CreateBookForm() {
     },
   });
 
+  useEffect(() => {
+    if (book) {
+      form.reset({
+        title: book.title,
+        author: book.author._id,
+        publishedYear: String(book.publishedYear),
+        genres: book.genres.join(", "),
+      });
+    }
+  }, [book, form]);
+
   const mutation = useMutation({
     mutationFn: async (data: CreateBookFormData) => {
-      const res = await fetch("http://localhost:3001/api/books", {
-        method: "POST",
+      const method = book ? "PATCH" : "POST";
+      const url = book
+        ? `http://localhost:3001/api/books/${book._id}`
+        : `http://localhost:3001/api/books`;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           title: data.title,
-          author: data.author, // נשלח בדיוק כמו שהשרת מצפה
+          author: data.author,
           publishedYear: Number(data.publishedYear),
           genres: data.genres.split(",").map((g) => g.trim()),
         }),
@@ -50,7 +79,7 @@ export function CreateBookForm() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to create book");
+        throw new Error(errorData.message || "Failed to save book");
       }
 
       return res.json();
@@ -58,8 +87,11 @@ export function CreateBookForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books"] });
       form.reset();
-      setSuccessMessage("✅ Book created successfully!");
-      setTimeout(() => setSuccessMessage(null), 3000);
+      if (onClose) onClose();
+      else {
+        setSuccessMessage("✅ Book saved successfully!");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
     },
     onError: (error: any) => {
       setSuccessMessage(null);
@@ -76,7 +108,7 @@ export function CreateBookForm() {
       <div className="flex items-center justify-center gap-3 mb-6">
         <Sparkles className="text-indigo-500 dark:text-pink-400" />
         <h2 className="text-3xl font-extrabold text-gray-800 dark:text-white text-center">
-          Add a New Book
+          {book ? "Edit Book" : "Add a New Book"}
         </h2>
       </div>
 
@@ -95,9 +127,9 @@ export function CreateBookForm() {
           <FormFieldWrapper
             control={form.control}
             name="author"
-            label="Author Name"
+            label="Author ID"
             type="text"
-            placeholder="Author full name"
+            placeholder="Author ID"
           />
           <FormFieldWrapper
             control={form.control}
@@ -119,7 +151,13 @@ export function CreateBookForm() {
             disabled={mutation.isPending}
             className="w-full text-base font-semibold tracking-wide py-3 rounded-full"
           >
-            {mutation.isPending ? "Adding..." : "Add Book 📚"}
+            {mutation.isPending
+              ? book
+                ? "Updating..."
+                : "Adding..."
+              : book
+              ? "Update Book ✏️"
+              : "Add Book 📚"}
           </Button>
 
           {successMessage && (

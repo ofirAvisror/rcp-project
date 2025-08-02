@@ -104,6 +104,44 @@ const BookController = {
       });
     }
   },
+  async updateBook(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { title, author, publishedYear, genres } = req.body;
+
+    const existingBook = await BookModel.findById(id);
+    if (!existingBook) {
+      res.status(404).json({ message: "Book not found" });
+      return;
+    }
+
+    const bookAuthor = await Author.findById(author);
+    if (!bookAuthor) {
+      res.status(400).json({ message: "Invalid author ID" });
+      return;
+    }
+
+    existingBook.title = title;
+    existingBook.author = bookAuthor._id;
+    existingBook.publishedYear = publishedYear;
+    existingBook.genres = genres;
+
+    await existingBook.save();
+
+    const updated = await BookModel.findById(id)
+      .populate("author", "name")
+      .populate("addedBy", "name");
+
+    res.json({
+      success: true,
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Update book error:", error);
+    res.status(500).json({ message: "Server error during update", error });
+  }
+}
+
 };
 
 export default BookController;
