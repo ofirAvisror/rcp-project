@@ -11,7 +11,7 @@ import { Sparkles } from "lucide-react";
 // סכמת ולידציה לספר חדש
 const createBookSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  authorName: z.string().min(1, "Author name is required"),
+  author: z.string().min(1, "Author name is required"),
   publishedYear: z
     .string()
     .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
@@ -28,7 +28,7 @@ export function CreateBookForm() {
     resolver: zodResolver(createBookSchema),
     defaultValues: {
       title: "",
-      authorName: "",
+      author: "",
       publishedYear: "",
       genres: "",
     },
@@ -42,7 +42,7 @@ export function CreateBookForm() {
         credentials: "include",
         body: JSON.stringify({
           title: data.title,
-          authorName: data.authorName,
+          author: data.author, // נשלח בדיוק כמו שהשרת מצפה
           publishedYear: Number(data.publishedYear),
           genres: data.genres.split(",").map((g) => g.trim()),
         }),
@@ -94,7 +94,7 @@ export function CreateBookForm() {
           />
           <FormFieldWrapper
             control={form.control}
-            name="authorName"
+            name="author"
             label="Author Name"
             type="text"
             placeholder="Author full name"

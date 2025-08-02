@@ -33,6 +33,10 @@ type Book = {
   };
   publishedYear: number;
   genres: string[];
+  addedBy: {
+    _id: string;
+    name: string;
+  };
 };
 
 export function BooksPage() {
@@ -52,11 +56,11 @@ export function BooksPage() {
       const res = await fetch("http://localhost:3001/api/books/all", {
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.json()).message || "Failed to fetch books");
+      if (!res.ok)
+        throw new Error((await res.json()).message || "Failed to fetch books");
 
-      // ✅ תיקון כאן - מחלץ את books מתוך האובייקט שהשרת מחזיר
-      const data = await res.json();
-      return data.books;
+      const json = await res.json();
+      return json.data;
     },
     enabled: !!user,
   });
@@ -68,7 +72,8 @@ export function BooksPage() {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.json()).message || "Failed to delete book");
+      if (!res.ok)
+        throw new Error((await res.json()).message || "Failed to delete book");
       queryClient.invalidateQueries({ queryKey: ["books"] });
       setBookToDelete(null);
     } catch (err: any) {
@@ -132,7 +137,7 @@ export function BooksPage() {
                 </p>
               </div>
 
-              {user?.role === "admin" && (
+              {user?.userId === book.addedBy._id && (
                 <div className="absolute top-4 right-4 flex gap-2">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -152,7 +157,9 @@ export function BooksPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setBookToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setBookToDelete(null)}>
+                          Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
