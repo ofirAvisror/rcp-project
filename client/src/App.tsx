@@ -1,17 +1,15 @@
 import { Header } from "@/components/Header";
 import { AuthPage } from "@/components/AuthPage";
 import { useAuth } from "./components/AuthContext";
-import { BooksPage } from "./components/BooksPage"; // תוקן כאן השם
+import { RecipesPage } from "./components/RecipesPage"; // תוקן השם והנתיב
 
 function App() {
   const { user } = useAuth();
 
   return (
-    
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-700 to-pink-500">
       <Header />
-      
-      <main className="p-6">{user ? <BooksPage /> : <AuthPage />} </main>
+      <main className="p-6">{user ? <RecipesPage /> : <AuthPage />}</main>
     </div>
   );
 }

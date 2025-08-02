@@ -8,62 +8,62 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
-const createBookSchema = z.object({
+const createRecipeSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  author: z.string().min(1, "Author name is required"),
+  chef: z.string().min(1, "Chef ID is required"),
   publishedYear: z
     .string()
     .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
   genres: z.string().min(1, "Genres are required (comma-separated)"),
 });
 
-type CreateBookFormData = z.infer<typeof createBookSchema>;
+type CreateRecipeFormData = z.infer<typeof createRecipeSchema>;
 
-type Book = {
+type Recipe = {
   _id: string;
   title: string;
-  author: { _id: string; name: string };
+  chef: { _id: string; name: string };
   publishedYear: number;
   genres: string[];
   addedBy: { _id: string; name: string };
 };
 
 type Props = {
-  book?: Book;
+  recipe?: Recipe;
   onClose?: () => void;
 };
 
-export function CreateBookForm({ book, onClose }: Props) {
+export function CreateRecipeForm({ recipe, onClose }: Props) {
   const queryClient = useQueryClient();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const form = useForm<CreateBookFormData>({
-    resolver: zodResolver(createBookSchema),
+  const form = useForm<CreateRecipeFormData>({
+    resolver: zodResolver(createRecipeSchema),
     defaultValues: {
       title: "",
-      author: "",
+      chef: "",
       publishedYear: "",
       genres: "",
     },
   });
 
   useEffect(() => {
-    if (book) {
+    if (recipe) {
       form.reset({
-        title: book.title,
-        author: book.author._id,
-        publishedYear: String(book.publishedYear),
-        genres: book.genres.join(", "),
+        title: recipe.title,
+        chef: recipe.chef._id,
+        publishedYear: String(recipe.publishedYear),
+        genres: recipe.genres.join(", "),
       });
     }
-  }, [book, form]);
+  }, [recipe, form]);
 
   const mutation = useMutation({
-    mutationFn: async (data: CreateBookFormData) => {
-      const method = book ? "PATCH" : "POST";
-      const url = book
-        ? `http://localhost:3001/api/books/${book._id}`
-        : `http://localhost:3001/api/books`;
+    mutationFn: async (data: CreateRecipeFormData) => {
+      const method = recipe ? "PATCH" : "POST";
+      const url = recipe
+        ? `http://localhost:3001/api/recipes/${recipe._id}`
+        : `http://localhost:3001/api/recipes`;
 
       const res = await fetch(url, {
         method,
@@ -71,7 +71,7 @@ export function CreateBookForm({ book, onClose }: Props) {
         credentials: "include",
         body: JSON.stringify({
           title: data.title,
-          author: data.author,
+          chef: data.chef,
           publishedYear: Number(data.publishedYear),
           genres: data.genres.split(",").map((g) => g.trim()),
         }),
@@ -79,17 +79,17 @@ export function CreateBookForm({ book, onClose }: Props) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to save book");
+        throw new Error(errorData.message || "Failed to save recipe");
       }
 
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
       form.reset();
       if (onClose) onClose();
       else {
-        setSuccessMessage("✅ Book saved successfully!");
+        setSuccessMessage("✅ Recipe saved successfully!");
         setTimeout(() => setSuccessMessage(null), 3000);
       }
     },
@@ -99,7 +99,7 @@ export function CreateBookForm({ book, onClose }: Props) {
     },
   });
 
-  const onSubmit = (data: CreateBookFormData) => {
+  const onSubmit = (data: CreateRecipeFormData) => {
     mutation.mutate(data);
   };
 
@@ -108,7 +108,7 @@ export function CreateBookForm({ book, onClose }: Props) {
       <div className="flex items-center justify-center gap-3 mb-6">
         <Sparkles className="text-indigo-500 dark:text-pink-400" />
         <h2 className="text-3xl font-extrabold text-gray-800 dark:text-white text-center">
-          {book ? "Edit Book" : "Add a New Book"}
+          {recipe ? "Edit Recipe" : "Add a New Recipe"}
         </h2>
       </div>
 
@@ -122,14 +122,14 @@ export function CreateBookForm({ book, onClose }: Props) {
             name="title"
             label="Title"
             type="text"
-            placeholder="Book title"
+            placeholder="Recipe title"
           />
           <FormFieldWrapper
             control={form.control}
-            name="author"
-            label="Author ID"
+            name="chef"
+            label="Chef ID"
             type="text"
-            placeholder="Author ID"
+            placeholder="Chef ID"
           />
           <FormFieldWrapper
             control={form.control}
@@ -152,12 +152,12 @@ export function CreateBookForm({ book, onClose }: Props) {
             className="w-full text-base font-semibold tracking-wide py-3 rounded-full"
           >
             {mutation.isPending
-              ? book
+              ? recipe
                 ? "Updating..."
                 : "Adding..."
-              : book
-              ? "Update Book ✏️"
-              : "Add Book 📚"}
+              : recipe
+              ? "Update Recipe ✏️"
+              : "Add Recipe 🍳"}
           </Button>
 
           {successMessage && (

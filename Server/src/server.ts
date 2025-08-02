@@ -9,8 +9,8 @@ import connectDB from './config/db'
 
 // Routes Imports
 import authRoutes from './routes/auth';
-import authorRoutes from './routes/author';
-import bookRoutes from './routes/book';
+import chefRoutes from './routes/Chef';        // תיקנתי מ-authorRoutes ל-chefRoutes
+import recipeRoutes from './routes/Recipe';    // תיקנתי מ-bookRoutes ל-recipeRoutes
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -34,8 +34,8 @@ app.use(morgan('tiny'));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/authors', authorRoutes)
-app.use('/api/books', bookRoutes)
+app.use('/api/chefs', chefRoutes);           // נתיב מתוקן ל-chefs
+app.use('/api/recipes', recipeRoutes);        // נתיב מתוקן ל-recipes
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -56,4 +56,4 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-}); 
+});
