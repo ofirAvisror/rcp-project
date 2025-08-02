@@ -2,7 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 interface IReview extends Document {
   _id: mongoose.Types.ObjectId;
-  book: mongoose.Types.ObjectId;
+  recipe: mongoose.Types.ObjectId;
   reviewer: mongoose.Types.ObjectId;
   rating: number;
   text: string;
@@ -12,19 +12,19 @@ interface IReview extends Document {
 
 const reviewSchema = new mongoose.Schema<IReview>(
   {
-    book: {
+    recipe: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Book",
-      require: true,
+      ref: "Recipe",
+      required: true,
     },
     reviewer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      require: true,
+      required: true,
     },
     rating: {
       type: Number,
-      require: true,
+      required: true,
     },
     text: String,
   },
