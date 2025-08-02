@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "./AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -127,7 +126,7 @@ export function BooksPage() {
                   {book.title}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  ✍️ {" "}
+                  ✍️{" "}
                   <span className="font-semibold text-indigo-600 dark:text-indigo-400">
                     {book.author.name}
                   </span>{" "}
@@ -138,7 +137,7 @@ export function BooksPage() {
                 </p>
               </div>
 
-              {(user?.role === "admin" || user?.userId === book.addedBy._id) && (
+              {user?.userId === book.addedBy._id && (
                 <div className="absolute top-4 right-4 flex gap-2">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -158,7 +157,9 @@ export function BooksPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setBookToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setBookToDelete(null)}>
+                          Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
