@@ -32,7 +32,7 @@ type Recipe = {
     name: string;
   };
   publishedYear: number;
-  genres: string[];               // או categories אם זה השם שאתה משתמש
+  categories: string[]; // שים לב: categories במקום genres
   description?: string; // אופציונלי
   addedBy: {
     _id: string;
@@ -135,7 +135,7 @@ export function RecipesPage() {
                   · {recipe.publishedYear}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
-                  Categories: {(recipe.genres ?? []).join(", ")}
+                  Categories: {(recipe.categories ?? []).join(", ")}
                 </p>
               </div>
 

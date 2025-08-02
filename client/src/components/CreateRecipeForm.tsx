@@ -19,7 +19,7 @@ const createRecipeSchema = z.object({
   publishedYear: z
     .string()
     .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
-  genres: z.string().min(1, "Genres are required (comma-separated)"),
+  categories: z.string().min(1, "Categories are required (comma-separated)"),
   description: z.string().min(0).optional(),
 });
 
@@ -30,7 +30,7 @@ type Recipe = {
   title: string;
   chef: { _id: string; name: string };
   publishedYear: number;
-  genres: string[];
+  categories: string[];
   description?: string;
   addedBy: { _id: string; name: string };
 };
@@ -51,7 +51,7 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
       chef: "",
       chefBirthYear: "",
       publishedYear: "",
-      genres: "",
+      categories: "",
       description: "",
     },
   });
@@ -63,7 +63,7 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
         chef: recipe.chef._id,
         chefBirthYear: "", // מאפס כי בשינוי עריכה השדה לא רלוונטי
         publishedYear: String(recipe.publishedYear),
-        genres: recipe.genres.join(", "),
+        categories: recipe.categories.join(", "),
         description: recipe.description ?? "",
       });
     }
@@ -80,11 +80,10 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
         title: data.title,
         chef: data.chef,
         publishedYear: Number(data.publishedYear),
-        genres: data.genres.split(",").map((g) => g.trim()),
+        categories: data.categories.split(",").map((c) => c.trim()),
         description: data.description || "",
       };
 
-      // שולחים chefBirthYear רק אם קיים ולא ריק (כשיוצרים שף חדש)
       if (!recipe && data.chefBirthYear && data.chefBirthYear !== "") {
         Object.assign(body, { chefBirthYear: Number(data.chefBirthYear) });
       }
@@ -168,10 +167,10 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
           />
           <FormFieldWrapper
             control={form.control}
-            name="genres"
-            label="Genres"
+            name="categories"
+            label="Categories"
             type="text"
-            placeholder="comma,separated,genres"
+            placeholder="comma,separated,categories"
           />
           <FormFieldWrapper
             control={form.control}
