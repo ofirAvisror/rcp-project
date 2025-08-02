@@ -10,11 +10,17 @@ import { Sparkles } from "lucide-react";
 
 const createRecipeSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  chef: z.string().min(1, "Chef ID is required"),
+  chef: z.string().min(1, "Chef ID or Name is required"),
+  chefBirthYear: z
+    .string()
+    .regex(/^\d{4}$/, "Chef Birth Year must be a valid year (e.g. 1980)")
+    .optional()
+    .or(z.literal('')), // מאפשר גם מחרוזת ריקה
   publishedYear: z
     .string()
     .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
   genres: z.string().min(1, "Genres are required (comma-separated)"),
+  description: z.string().min(0).optional(),
 });
 
 type CreateRecipeFormData = z.infer<typeof createRecipeSchema>;
@@ -25,6 +31,7 @@ type Recipe = {
   chef: { _id: string; name: string };
   publishedYear: number;
   genres: string[];
+  description?: string;
   addedBy: { _id: string; name: string };
 };
 
@@ -42,8 +49,10 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
     defaultValues: {
       title: "",
       chef: "",
+      chefBirthYear: "",
       publishedYear: "",
       genres: "",
+      description: "",
     },
   });
 
@@ -52,8 +61,10 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
       form.reset({
         title: recipe.title,
         chef: recipe.chef._id,
+        chefBirthYear: "", // מאפס כי בשינוי עריכה השדה לא רלוונטי
         publishedYear: String(recipe.publishedYear),
         genres: recipe.genres.join(", "),
+        description: recipe.description ?? "",
       });
     }
   }, [recipe, form]);
@@ -65,16 +76,24 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
         ? `http://localhost:3001/api/recipes/${recipe._id}`
         : `http://localhost:3001/api/recipes`;
 
+      const body = {
+        title: data.title,
+        chef: data.chef,
+        publishedYear: Number(data.publishedYear),
+        genres: data.genres.split(",").map((g) => g.trim()),
+        description: data.description || "",
+      };
+
+      // שולחים chefBirthYear רק אם קיים ולא ריק (כשיוצרים שף חדש)
+      if (!recipe && data.chefBirthYear && data.chefBirthYear !== "") {
+        Object.assign(body, { chefBirthYear: Number(data.chefBirthYear) });
+      }
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          title: data.title,
-          chef: data.chef,
-          publishedYear: Number(data.publishedYear),
-          genres: data.genres.split(",").map((g) => g.trim()),
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -127,10 +146,19 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
           <FormFieldWrapper
             control={form.control}
             name="chef"
-            label="Chef ID"
+            label="Chef ID or Name"
             type="text"
-            placeholder="Chef ID"
+            placeholder="Chef ID or Name"
           />
+          {!recipe && (
+            <FormFieldWrapper
+              control={form.control}
+              name="chefBirthYear"
+              label="Chef Birth Year (if creating new chef)"
+              type="text"
+              placeholder="e.g. 1980"
+            />
+          )}
           <FormFieldWrapper
             control={form.control}
             name="publishedYear"
@@ -144,6 +172,13 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
             label="Genres"
             type="text"
             placeholder="comma,separated,genres"
+          />
+          <FormFieldWrapper
+            control={form.control}
+            name="description"
+            label="Description"
+            type="text"
+            placeholder="Recipe description / instructions"
           />
 
           <Button

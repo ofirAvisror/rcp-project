@@ -4,12 +4,12 @@ import ChefModel from '../models/Chef';
 const ChefController = {
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const { name, specialty, experienceYears, about } = req.body;
+      const { name, specialty, experienceYears, about, birthYear } = req.body;
 
-      if (!name || !specialty || !experienceYears) {
+      if (!name || !specialty || !experienceYears || !birthYear) {
         res.status(400).json({
           success: false,
-          message: "name, specialty or experienceYears are missing"
+          message: "name, specialty, experienceYears or birthYear are missing"
         });
         return;
       }
@@ -18,7 +18,8 @@ const ChefController = {
         name,
         specialty,
         experienceYears,
-        about
+        about,
+        birthYear,
       });
 
       await newChef.save();
@@ -82,9 +83,9 @@ const ChefController = {
   async updateChef(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, specialty, experienceYears, about } = req.body;
+      const { name, specialty, experienceYears, about, birthYear } = req.body;
 
-      if (!name && !specialty && !experienceYears && !about) {
+      if (!name && !specialty && !experienceYears && !about && !birthYear) {
         res.status(400).json({
           success: false,
           message: `At least one field is required`
@@ -92,9 +93,11 @@ const ChefController = {
         return;
       }
 
-      const updatedChef = await ChefModel.findByIdAndUpdate(id, {
-        name, specialty, experienceYears, about
-      }, { new: true });
+      const updatedChef = await ChefModel.findByIdAndUpdate(
+        id,
+        { name, specialty, experienceYears, about, birthYear },
+        { new: true }
+      );
 
       if (!updatedChef) {
         res.status(404).json({

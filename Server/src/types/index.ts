@@ -11,12 +11,12 @@ export interface User {
 export interface Recipe {
   id: string;
   title: string;
-  chef: string;          // מזהה של שף
-  description: string;
+  chef: string;           // מזהה של שף
+  description: string;    // תיאור / הוראות הכנה
   publishedYear: number;
-  categories: string[];  // במקום genres, אפשר לקרוא קטגוריות
+  categories: string[];   // במקום genres
   createdAt: Date;
-  userId: string;        // מי הוסיף את המתכון
+  userId: string;         // מי הוסיף את המתכון
 }
 
 export interface LoginRequest {
@@ -38,7 +38,7 @@ export interface AuthPayload {
 export interface CreateRecipeRequest {
   title: string;
   chef: string;
-  description: string;
+  description: string;     // חובה ביצירה
   publishedYear: number;
   categories: string[];
 }
@@ -46,7 +46,7 @@ export interface CreateRecipeRequest {
 export interface UpdateRecipeRequest {
   title?: string;
   chef?: string;
-  description?: string;
+  description?: string;    // אופציונלי בעדכון
   publishedYear?: number;
   categories?: string[];
 }

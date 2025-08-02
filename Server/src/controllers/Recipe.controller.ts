@@ -7,11 +7,11 @@ import User from '../models/User';
 const RecipeController = {
   async create(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { title, chef, publishedYear, genres } = req.body;
+      const { title, chef, publishedYear, categories, description, chefBirthYear } = req.body;
 
       let recipeChef;
 
-      // בדיקה אם chef הוא ObjectId
+      // בדיקה אם chef הוא ObjectId תקין
       if (/^[0-9a-fA-F]{24}$/.test(chef)) {
         recipeChef = await ChefModel.findById(chef);
       }
@@ -20,9 +20,16 @@ const RecipeController = {
       if (!recipeChef) {
         recipeChef = await ChefModel.findOne({ name: chef });
 
-        // אם לא קיים בכלל – ניצור חדש
+        // אם לא קיים כלל – צור חדש רק אם birthYear קיים
         if (!recipeChef) {
-          recipeChef = await ChefModel.create({ name: chef });
+          if (chefBirthYear === undefined || chefBirthYear === null) {
+            res.status(400).json({
+              success: false,
+              message: "Chef not found and birthYear is required to create new chef",
+            });
+            return;
+          }
+          recipeChef = await ChefModel.create({ name: chef, birthYear: chefBirthYear });
         }
       }
 
@@ -38,7 +45,8 @@ const RecipeController = {
         title,
         chef: recipeChef._id,
         publishedYear,
-        genres,
+        categories,
+        description,
         addedBy: user._id,
       });
 
@@ -108,7 +116,7 @@ const RecipeController = {
   async updateRecipe(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { title, chef, publishedYear, genres } = req.body;
+      const { title, chef, publishedYear, categories, description } = req.body;
 
       const existingRecipe = await RecipeModel.findById(id);
       if (!existingRecipe) {
@@ -125,7 +133,8 @@ const RecipeController = {
       existingRecipe.title = title;
       existingRecipe.chef = recipeChef._id;
       existingRecipe.publishedYear = publishedYear;
-      existingRecipe.genres = genres;
+      existingRecipe.categories = categories;
+      existingRecipe.description = description;
 
       await existingRecipe.save();
 
