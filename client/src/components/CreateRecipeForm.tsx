@@ -15,7 +15,7 @@ const createRecipeSchema = z.object({
     .string()
     .regex(/^\d{4}$/, "Chef Birth Year must be a valid year (e.g. 1980)")
     .optional()
-    .or(z.literal('')), // מאפשר גם מחרוזת ריקה
+    .or(z.literal("")), // מאפשר גם מחרוזת ריקה
   publishedYear: z
     .string()
     .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
@@ -33,6 +33,7 @@ type Recipe = {
   categories: string[];
   description?: string;
   addedBy: { _id: string; name: string };
+  criteria: string[];
 };
 
 type Props = {

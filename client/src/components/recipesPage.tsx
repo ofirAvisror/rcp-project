@@ -73,7 +73,8 @@ export function RecipesPage() {
       }
       await queryClient.invalidateQueries({ queryKey: ["recipes"] });
       setRecipeToDelete(null);
-    } catch (err: any) {
+    } catch (err:any)
+ {
       alert(`Error deleting recipe: ${err.message}`);
     }
   };
