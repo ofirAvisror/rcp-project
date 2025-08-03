@@ -1,11 +1,11 @@
+// RecipesPage.tsx
 import { useState, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreateRecipeForm } from "./CreateRecipeForm";
-
 import { Button } from "@/components/ui/button";
-import { Trash2, Pencil, Plus } from "lucide-react";
-
+import { Plus } from "lucide-react";
+import { RecipeCard } from "./RecipeCard";
 import {
   Dialog,
   DialogTrigger,
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -25,28 +24,23 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-
-type Recipe = {
+export type Recipe = {
   _id: string;
   title: string;
-  chef: {
-    _id: string;
-    name: string;
-  };
+  chef: { _id: string; name: string };
   publishedYear: number;
   categories: string[];
   description?: string;
-  addedBy: {
-    _id: string;
-    name: string;
-  };
+  addedBy: { _id: string; name: string };
+};
+
+export type Chef = {
+  _id: string;
+  name: string;
+  specialty: string;
+  experienceYears: number;
+  about?: string;
+  birthYear: number;
 };
 
 export function RecipesPage() {
@@ -55,43 +49,43 @@ export function RecipesPage() {
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"recipes" | "chefs">("recipes");
 
-  const {
-    data: recipes,
-    isLoading,
-    isError,
-    error,
-  } = useQuery<Recipe[]>({
+  const { data: recipes = [], isLoading: loadingRecipes, isError: errorRecipes } = useQuery<Recipe[]>({
     queryKey: ["recipes"],
     queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("http://localhost:3001/api/recipes/all", {
-        credentials: "include",
-      });
+      const res = await fetch("http://localhost:3001/api/recipes/all", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch recipes");
-      const json = await res.json();
-      return json.data;
+      return (await res.json()).data || [];
     },
-    enabled: !!user,
+    enabled: !!user && activeTab === "recipes",
+  });
+
+  const { data: chefs = [], isLoading: loadingChefs, isError: errorChefs } = useQuery<Chef[]>({
+    queryKey: ["chefs"],
+    queryFn: async () => {
+      const res = await fetch("http://localhost:3001/api/chefs/all", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch chefs");
+      return (await res.json()).data || [];
+    },
+    enabled: !!user && activeTab === "chefs",
   });
 
   const allCategories = useMemo(() => {
-    return Array.from(new Set((recipes ?? []).flatMap((r) => r.categories)));
+    return Array.from(new Set(recipes.flatMap((r) => r.categories)));
   }, [recipes]);
 
   const filteredRecipes = useMemo(() => {
-    if (!selectedCategory) return recipes;
-    return recipes?.filter((r) => r.categories.includes(selectedCategory));
+    return selectedCategory ? recipes.filter((r) => r.categories.includes(selectedCategory)) : recipes;
   }, [recipes, selectedCategory]);
 
   const handleDelete = async () => {
     if (!user || !recipeToDelete) return;
     try {
-      const res = await fetch(`http://localhost:3001/api/recipes/${recipeToDelete}`, {
+      await fetch(`http://localhost:3001/api/recipes/${recipeToDelete}`, {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to delete recipe");
       queryClient.invalidateQueries({ queryKey: ["recipes"] });
       setRecipeToDelete(null);
     } catch (err: any) {
@@ -100,49 +94,30 @@ export function RecipesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-16 px-6">
-      {/* Header + Sidebar Trigger */}
-      <div className="flex justify-between items-center mb-12">
-        <div className="flex items-center gap-4">
-          {/* Mobile Sidebar Trigger */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="md:hidden">
-                ☰
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-4">
-              <SheetHeader>
-                <SheetTitle>Filter by Category</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4 flex flex-col gap-2">
-                <Button
-                  variant={selectedCategory === "" ? "default" : "outline"}
-                  onClick={() => setSelectedCategory("")}
-                >
-                  All
-                </Button>
-                {allCategories.map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={selectedCategory === cat ? "default" : "outline"}
-                    onClick={() => setSelectedCategory(cat)}
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          <h1 className="text-5xl font-black text-purple-700 dark:text-pink-300">🍳 Recipes</h1>
+    <div className="max-w-7xl mx-auto py-10 px-4">
+      {/* Header + Tabs */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-6">
+          <h1 className="text-4xl font-extrabold text-purple-700 dark:text-pink-300">🍽️ My Recipes</h1>
+          <div className="flex gap-2">
+            <Button
+              className={`rounded-full px-6 py-2 ${activeTab === "recipes" ? "bg-purple-600 text-white" : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-white"}`}
+              onClick={() => setActiveTab("recipes")}
+            >
+              Recipes
+            </Button>
+            <Button
+              className={`rounded-full px-6 py-2 ${activeTab === "chefs" ? "bg-purple-600 text-white" : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-white"}`}
+              onClick={() => setActiveTab("chefs")}
+            >
+              Chefs
+            </Button>
+          </div>
         </div>
-
-        {/* New Recipe Button */}
-        {user && (
+        {user && activeTab === "recipes" && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="flex gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full shadow">
+              <Button className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5 py-2 flex items-center gap-2">
                 <Plus className="w-4 h-4" /> New Recipe
               </Button>
             </DialogTrigger>
@@ -156,11 +131,11 @@ export function RecipesPage() {
         )}
       </div>
 
-      {/* Desktop Sidebar */}
-      {user && allCategories.length > 0 && (
-        <div className="hidden md:flex gap-3 mb-10 flex-wrap">
+      {/* Category Filters */}
+      {activeTab === "recipes" && allCategories.length > 0 && (
+        <div className="flex flex-wrap gap-3 mb-8">
           <Button
-            variant={selectedCategory === "" ? "default" : "outline"}
+            className={`rounded-full px-4 py-1 text-sm ${selectedCategory === "" ? "bg-purple-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"}`}
             onClick={() => setSelectedCategory("")}
           >
             All
@@ -168,7 +143,7 @@ export function RecipesPage() {
           {allCategories.map((cat) => (
             <Button
               key={cat}
-              variant={selectedCategory === cat ? "default" : "outline"}
+              className={`rounded-full px-4 py-1 text-sm ${selectedCategory === cat ? "bg-purple-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"}`}
               onClick={() => setSelectedCategory(cat)}
             >
               {cat}
@@ -177,83 +152,70 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* Status Messages */}
-      {!user && (
-        <div className="text-center text-lg text-yellow-700 dark:text-yellow-300 mb-8">
-          Please log in to view recipes.
+      {/* Recipes */}
+      {activeTab === "recipes" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loadingRecipes ? (
+            <p>Loading recipes...</p>
+          ) : errorRecipes ? (
+            <p className="text-red-500">Failed to load recipes</p>
+          ) : (
+            filteredRecipes.map((recipe) => (
+              <RecipeCard
+                key={recipe._id}
+                recipe={recipe}
+                userId={user?.userId}
+                onEdit={() => setEditingRecipe(recipe)}
+                onDelete={() => setRecipeToDelete(recipe._id)}
+                onReviewSubmit={async (data) => {
+                  await fetch(`http://localhost:3001/api/recipes/${recipe._id}/reviews`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify(data),
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["reviews", recipe._id] });
+                }}
+              />
+            ))
+          )}
         </div>
       )}
 
-      {isLoading ? (
-        <div className="text-center py-20">Loading...</div>
-      ) : isError ? (
-        <div className="text-center py-20 text-red-600">{error?.message}</div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {filteredRecipes?.map((recipe) => (
-            <div
-              key={recipe._id}
-              className="relative rounded-3xl bg-white/80 dark:bg-gray-900/80 border shadow-xl p-6 hover:shadow-2xl"
-            >
-              <div className="mb-4">
-                <h3 className="text-2xl font-bold text-purple-800 dark:text-pink-300 mb-2">
-                  {recipe.title}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  👨‍🍳{" "}
-                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                    {recipe.chef.name}
-                  </span>{" "}
-                  · {recipe.publishedYear}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
-                  Categories: {(recipe.categories ?? []).join(", ")}
-                </p>
+      {/* Chefs */}
+      {activeTab === "chefs" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loadingChefs ? (
+            <p>Loading chefs...</p>
+          ) : errorChefs ? (
+            <p className="text-red-500">❌ Failed to load chefs</p>
+          ) : (
+            chefs.map((chef) => (
+              <div key={chef._id} className="border rounded-xl p-6 shadow bg-white dark:bg-gray-900 transition hover:shadow-lg">
+                <h3 className="text-xl font-bold mb-1 text-gray-800 dark:text-white">{chef.name}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">👨‍🍳 Specialty: {chef.specialty}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">📈 Experience: {chef.experienceYears} years</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">🎂 Born: {chef.birthYear}</p>
+                {chef.about && <p className="text-sm mt-2 italic text-gray-500">{chef.about}</p>}
               </div>
-
-              {/* Actions */}
-              {user?.userId === recipe.addedBy._id && (
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setEditingRecipe(recipe)}
-                    className="bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900 text-yellow-700 dark:text-yellow-400 rounded-full p-2"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setRecipeToDelete(recipe._id)}
-                        className="bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900 text-red-700 dark:text-red-400 rounded-full p-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this recipe?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setRecipeToDelete(null)}>
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
+
+      {/* Delete Dialog */}
+      <AlertDialog open={!!recipeToDelete} onOpenChange={() => setRecipeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Dialog */}
       {editingRecipe && (
@@ -262,10 +224,7 @@ export function RecipesPage() {
             <DialogHeader>
               <DialogTitle>Edit Recipe</DialogTitle>
             </DialogHeader>
-            <CreateRecipeForm
-              recipe={editingRecipe}
-              onClose={() => setEditingRecipe(null)}
-            />
+            <CreateRecipeForm recipe={editingRecipe} onClose={() => setEditingRecipe(null)} />
           </DialogContent>
         </Dialog>
       )}
