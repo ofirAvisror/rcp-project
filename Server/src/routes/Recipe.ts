@@ -1,5 +1,5 @@
 import express from 'express';
-import RecipeController from '../controllers/Recipe.Controller';
+import RecipeController from '../controllers/Recipe.controller';
 import { authenticateToken } from '../middleware/auth';
 import { validateRecipeOwner } from '../middleware/Recipe.mid';
 
