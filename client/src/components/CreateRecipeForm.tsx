@@ -33,7 +33,6 @@ type Recipe = {
   categories: string[];
   description?: string;
   addedBy: { _id: string; name: string };
-  criteria: string[];
 };
 
 type Props = {
