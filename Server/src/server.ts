@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-
+import reviewRoutes from "./routes/reviewRoutes";
 // Configs
 import connectDB from './config/db'
 
@@ -36,7 +36,7 @@ app.use(morgan('tiny'));
 app.use('/api/auth', authRoutes);
 app.use('/api/chefs', chefRoutes);           // נתיב מתוקן ל-chefs
 app.use('/api/recipes', recipeRoutes);        // נתיב מתוקן ל-recipes
-
+app.use('/api/recipes',reviewRoutes)
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 

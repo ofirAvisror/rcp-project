@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import axios from "axios";
 
 type User = {
@@ -6,7 +12,7 @@ type User = {
   name: string;
   email: string;
   createdAt: string;
-  role: "admin" | "user"; 
+  role: "admin" | "user";
 };
 
 type AuthContextType = {
@@ -33,7 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await axios.post("http://localhost:3001/api/auth/logout", {}, { withCredentials: true });
+    await axios.post(
+      "http://localhost:3001/api/auth/logout",
+      {},
+      { withCredentials: true }
+    );
     setUser(null);
     localStorage.removeItem("user");
   };
@@ -44,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
