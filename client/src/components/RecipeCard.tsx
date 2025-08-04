@@ -119,9 +119,7 @@ export function RecipeCard({
 
             {/* ---------- INFO DIALOG ---------- */}
             <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-xl bg-white dark:bg-gray-900">
-              <DialogHeader>
-                <DialogTitle>{recipe.title}</DialogTitle>
-              </DialogHeader>
+              
 
               {/* Hero */}
               <div className="relative">

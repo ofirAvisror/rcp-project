@@ -6,6 +6,8 @@ import { CreateRecipeForm } from "./CreateRecipeForm";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { RecipeCard } from "./RecipeCard";
+import { ChefCard } from "./ChefCard";
+
 import {
   Dialog,
   DialogTrigger,
@@ -32,6 +34,16 @@ import {
   NavigationMenuContent,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
+
+// ★ קרוסלה למובייל
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 // ✅ Recipe type with imageUrl optional
 export type Recipe = {
@@ -71,6 +83,9 @@ export function RecipesPage() {
 
   // ✅ New Recipe dialog state
   const [openNewRecipe, setOpenNewRecipe] = useState(false);
+
+  // ✅ מובייל?
+  const isMobile = useIsMobile("(max-width: 640px)");
 
   // --- Recipes query
   const {
@@ -114,7 +129,7 @@ export function RecipesPage() {
     enabled: !!user && activeTab === "recipes",
   });
 
-  // --- Chefs query
+  // --- Chefs query (runs only when Chefs tab is active)
   const {
     data: chefs = [],
     isLoading: loadingChefs,
@@ -128,7 +143,7 @@ export function RecipesPage() {
       if (!res.ok) throw new Error("Failed to fetch chefs");
       return (await res.json()).data || [];
     },
-    enabled: !!user,
+    enabled: !!user && activeTab === "chefs",
   });
 
   // --- Categories
@@ -140,8 +155,7 @@ export function RecipesPage() {
   const filteredRecipes = useMemo(() => {
     return recipes.filter((r) => {
       let ok = true;
-      if (selectedCategory && !r.categories.includes(selectedCategory))
-        ok = false;
+      if (selectedCategory && !r.categories.includes(selectedCategory)) ok = false;
       if (selectedChef && r.chef.name !== selectedChef) ok = false;
       if (selectedStars) {
         const stars = r.averageRating ?? 0;
@@ -273,30 +287,22 @@ export function RecipesPage() {
                 <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
                   <ul>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("gt4")}
-                      >
+                      <NavigationMenuLink onClick={() => setSelectedStars("gt4")}>
                         ⭐ More than 4
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("gt3")}
-                      >
+                      <NavigationMenuLink onClick={() => setSelectedStars("gt3")}>
                         ⭐ More than 3
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("gt2")}
-                      >
+                      <NavigationMenuLink onClick={() => setSelectedStars("gt2")}>
                         ⭐ More than 2
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("lt2")}
-                      >
+                      <NavigationMenuLink onClick={() => setSelectedStars("lt2")}>
                         ⭐ Less than 2
                       </NavigationMenuLink>
                     </li>
@@ -327,9 +333,7 @@ export function RecipesPage() {
                     </li>
                     {chefs.map((chef) => (
                       <li key={chef._id}>
-                        <NavigationMenuLink
-                          onClick={() => setSelectedChef(chef.name)}
-                        >
+                        <NavigationMenuLink onClick={() => setSelectedChef(chef.name)}>
                           {chef.name}
                         </NavigationMenuLink>
                       </li>
@@ -344,83 +348,113 @@ export function RecipesPage() {
 
       {/* Recipes */}
       {activeTab === "recipes" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loadingRecipes ? (
-            <p>Loading recipes...</p>
-          ) : errorRecipes ? (
-            <p className="text-red-500">Failed to load recipes</p>
-          ) : (
-            filteredRecipes.map((recipe) => (
-              <RecipeCard
-                key={recipe._id}
-                recipe={recipe}
-                userId={user?.userId}
-                onEdit={() => setEditingRecipe(recipe)}
-                onDelete={() => setRecipeToDelete(recipe._id)}
-                onReviewSubmit={async (data) => {
-                  await fetch(
-                    `http://localhost:3001/api/recipes/${recipe._id}/reviews`,
-                    {
+        isMobile ? (
+          // --- קרוסלה במובייל ---
+          <Carousel opts={{ align: "start", loop: true }} className="w-full">
+            <CarouselContent>
+              {loadingRecipes ? (
+                <CarouselItem><p>Loading recipes...</p></CarouselItem>
+              ) : errorRecipes ? (
+                <CarouselItem><p className="text-red-500">Failed to load recipes</p></CarouselItem>
+              ) : (
+                filteredRecipes.map((recipe) => (
+                  <CarouselItem key={recipe._id} className="basis-full">
+                    <RecipeCard
+                      recipe={recipe}
+                      userId={user?.userId}
+                      onEdit={() => setEditingRecipe(recipe)}
+                      onDelete={() => setRecipeToDelete(recipe._id)}
+                      onReviewSubmit={async (data) => {
+                        await fetch(`http://localhost:3001/api/recipes/${recipe._id}/reviews`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          credentials: "include",
+                          body: JSON.stringify(data),
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["recipes"] });
+                        queryClient.invalidateQueries({ queryKey: ["reviews", recipe._id] });
+                      }}
+                    />
+                  </CarouselItem>
+                ))
+              )}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        ) : (
+          // --- גריד בדסקטופ ---
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loadingRecipes ? (
+              <p>Loading recipes...</p>
+            ) : errorRecipes ? (
+              <p className="text-red-500">Failed to load recipes</p>
+            ) : (
+              filteredRecipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe._id}
+                  recipe={recipe}
+                  userId={user?.userId}
+                  onEdit={() => setEditingRecipe(recipe)}
+                  onDelete={() => setRecipeToDelete(recipe._id)}
+                  onReviewSubmit={async (data) => {
+                    await fetch(`http://localhost:3001/api/recipes/${recipe._id}/reviews`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
                       body: JSON.stringify(data),
-                    }
-                  );
-                  queryClient.invalidateQueries({
-                    queryKey: ["recipes"],
-                  });
-                  queryClient.invalidateQueries({
-                    queryKey: ["reviews", recipe._id],
-                  });
-                }}
-              />
-            ))
-          )}
-        </div>
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["recipes"] });
+                    queryClient.invalidateQueries({ queryKey: ["reviews", recipe._id] });
+                  }}
+                />
+              ))
+            )}
+          </div>
+        )
       )}
 
       {/* Chefs */}
       {activeTab === "chefs" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loadingChefs ? (
-            <p>Loading chefs...</p>
-          ) : errorChefs ? (
-            <p className="text-red-500">❌ Failed to load chefs</p>
-          ) : (
-            chefs.map((chef) => (
-              <div
-                key={chef._id}
-                className="border rounded-xl p-6 shadow bg-white dark:bg-gray-900 transition hover:shadow-lg"
-              >
-                <h3 className="text-xl font-bold mb-1 text-gray-800 dark:text-white">
-                  {chef.name}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  👨‍🍳 Specialty: {chef.specialty}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  📈 Experience years: {chef.experienceYears}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  🎂 Born: {chef.birthYear}
-                </p>
-                {chef.about && (
-                  <p className="text-sm mt-2 italic text-gray-500">
-                    {chef.about}
-                  </p>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+        isMobile ? (
+          // --- קרוסלה במובייל ---
+          <Carousel opts={{ align: "start", loop: true }} className="w-full">
+            <CarouselContent>
+              {loadingChefs ? (
+                <CarouselItem><p>Loading chefs...</p></CarouselItem>
+              ) : errorChefs ? (
+                <CarouselItem><p className="text-red-500">❌ Failed to load chefs</p></CarouselItem>
+              ) : chefs.length === 0 ? (
+                <CarouselItem><p className="text-gray-500">No chefs found.</p></CarouselItem>
+              ) : (
+                chefs.map((chef) => (
+                  <CarouselItem key={chef._id} className="basis-full">
+                    <ChefCard chef={chef} />
+                  </CarouselItem>
+                ))
+              )}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        ) : (
+          // --- גריד בדסקטופ ---
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loadingChefs ? (
+              <p>Loading chefs...</p>
+            ) : errorChefs ? (
+              <p className="text-red-500">❌ Failed to load chefs</p>
+            ) : chefs.length === 0 ? (
+              <p className="text-gray-500">No chefs found.</p>
+            ) : (
+              chefs.map((chef) => <ChefCard key={chef._id} chef={chef} />)
+            )}
+          </div>
+        )
       )}
 
       {/* Delete Dialog */}
-      <AlertDialog
-        open={!!recipeToDelete}
-        onOpenChange={() => setRecipeToDelete(null)}
-      >
+      <AlertDialog open={!!recipeToDelete} onOpenChange={() => setRecipeToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
@@ -437,18 +471,12 @@ export function RecipesPage() {
 
       {/* Edit Dialog */}
       {editingRecipe && (
-        <Dialog
-          open={!!editingRecipe}
-          onOpenChange={() => setEditingRecipe(null)}
-        >
+        <Dialog open={!!editingRecipe} onOpenChange={() => setEditingRecipe(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Recipe</DialogTitle>
             </DialogHeader>
-            <CreateRecipeForm
-              recipe={editingRecipe}
-              onClose={() => setEditingRecipe(null)}
-            />
+            <CreateRecipeForm recipe={editingRecipe} onClose={() => setEditingRecipe(null)} />
           </DialogContent>
         </Dialog>
       )}

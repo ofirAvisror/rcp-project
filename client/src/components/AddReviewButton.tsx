@@ -24,14 +24,14 @@ export function AddReviewButton({
 }: AddReviewButtonProps) {
   const [text, setText] = useState("");
   const [rating, setRating] = useState("1");
-  const [open, setOpen] = useState(false); // ✅ control dialog
+  const [open, setOpen] = useState(false);
 
   const handleSubmit = () => {
     if (!text.trim()) return;
     onSubmit({ recipeId, text, rating: Number(rating) });
     setText("");
     setRating("1");
-    setOpen(false); // ✅ close dialog after submit
+    setOpen(false);
   };
 
   return (
@@ -69,7 +69,7 @@ export function AddReviewButton({
               onValueChange={setRating}
               className="flex gap-4"
             >
-              {[1, 2, 3, 4].map((num) => (
+              {[1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="flex items-center space-x-2">
                   <RadioGroupItem value={String(num)} id={`rating-${num}`} />
                   <Label
