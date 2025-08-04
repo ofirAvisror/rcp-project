@@ -14,13 +14,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 
 /* ---------- Types ---------- */
 type Review = {
@@ -119,8 +113,6 @@ export function RecipeCard({
 
             {/* ---------- INFO DIALOG ---------- */}
             <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-xl bg-white dark:bg-gray-900">
-              
-
               {/* Hero */}
               <div className="relative">
                 {recipe.imageUrl ? (
