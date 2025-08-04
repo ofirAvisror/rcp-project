@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AddReviewButton } from "./AddReviewButton";
 import { Button } from "@/components/ui/button";
-import { Trash2, Pencil, Info } from "lucide-react";
+import { Trash2, Pencil, Info, ImageOff } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+/* ---------- Types ---------- */
 type Review = {
   _id: string;
   text: string;
@@ -37,7 +38,7 @@ type Recipe = {
   publishedYear: number;
   categories: string[];
   description?: string;
-  ingredients: string[]; // ✅ added here
+  ingredients: string[];
   addedBy: { _id: string; name: string };
   imageUrl?: string;
 };
@@ -56,6 +57,7 @@ export function RecipeCard({
   onReviewSubmit: (data: { text: string; rating: number }) => void;
 }) {
   const [openDetails, setOpenDetails] = useState(false);
+
   const { data: reviews } = useQuery<{ reviews: Review[] }>({
     queryKey: ["reviews", recipe._id],
     queryFn: async () => {
@@ -76,140 +78,223 @@ export function RecipeCard({
     : null;
 
   return (
-    <div className="relative rounded-2xl bg-white/90 dark:bg-gray-900/80 border border-purple-200 dark:border-gray-700 shadow-xl p-6 hover:shadow-2xl transition duration-300">
-      {averageRating && (
-        <div className="absolute top-3 left-3 text-sm text-yellow-600 font-bold bg-yellow-100 dark:bg-yellow-800 px-2 py-1 rounded shadow">
-          ⭐ {averageRating}/4
-        </div>
-      )}
-
-      <div className="mb-4 mt-6 space-y-2">
-        <h3 className="text-2xl font-extrabold text-purple-800 dark:text-pink-300 tracking-tight">
-          {recipe.title}
-        </h3>
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          👨‍🍳{" "}
-          <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-            {recipe.chef.name}
-          </span>
-        </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-          Year: {recipe.publishedYear}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-300">
-          🏷 Categories: {(recipe.categories ?? []).join(", ")}
-        </p>
-      </div>
-
-      {userId && (
-        <div className="mt-4">
-          <AddReviewButton recipeId={recipe._id} onSubmit={onReviewSubmit} />
-        </div>
-      )}
-      <div className="relative rounded-2xl overflow-hidden bg-white/90 dark:bg-gray-900/80 border border-purple-200 dark:border-gray-700 shadow-xl hover:shadow-2xl transition duration-300">
-        {recipe.imageUrl && (
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+      {/* ----- Image with floating actions ----- */}
+      <div className="relative">
+        {recipe.imageUrl ? (
           <img
             src={recipe.imageUrl}
             alt={recipe.title}
-            className="w-full h-48 object-cover"
+            loading="lazy"
+            className="w-full h-56 object-cover"
           />
+        ) : (
+          <div className="w-full h-56 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-gray-400">
+              <ImageOff className="w-5 h-5" />
+              <span className="text-sm">No image</span>
+            </div>
+          </div>
         )}
 
-        <div className="p-6">
-          {/* rest of your card content like title, chef, categories, etc. */}
+        {/* Rating badge */}
+        {averageRating && (
+          <div className="absolute top-3 left-3 text-xs font-semibold bg-white/90 dark:bg-gray-900/80 text-gray-800 dark:text-gray-100 px-2 py-1 rounded shadow-sm">
+            ⭐ {averageRating}/5
+          </div>
+        )}
+
+        {/* Action buttons (Info / Edit / Delete) */}
+        <div className="absolute top-3 right-3 flex items-center gap-1">
+          <Dialog open={openDetails} onOpenChange={setOpenDetails}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full bg-white/90 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-800">
+                <Info className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+              </Button>
+            </DialogTrigger>
+
+            {/* ---------- INFO DIALOG (clean recipe layout) ---------- */}
+            <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-xl bg-white dark:bg-gray-900">
+              {/* Hero */}
+              <div className="relative">
+                {recipe.imageUrl ? (
+                  <img
+                    src={recipe.imageUrl}
+                    alt={recipe.title}
+                    className="w-full h-60 object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-60 bg-gray-200 dark:bg-gray-800" />
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-5 pb-4 pt-10">
+                  <h2 className="text-2xl font-bold text-white">{recipe.title}</h2>
+                  <p className="mt-1 text-xs text-white/90">
+                    👨‍🍳 {recipe.chef.name}
+                    <span className="mx-2">•</span>
+                    📅 {recipe.publishedYear}
+                    {averageRating && (
+                      <>
+                        <span className="mx-2">•</span>
+                        ⭐ {averageRating}/5
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: description + reviews */}
+                <div className="lg:col-span-2 space-y-6">
+                  <section>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      Description
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-gray-700 dark:text-gray-300">
+                      {recipe.description || "No description provided."}
+                    </p>
+                  </section>
+
+                  <section>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      Reviews
+                    </h3>
+                    {reviewList.length > 0 ? (
+                      <ul className="mt-2 space-y-3">
+                        {reviewList.map((rev) => (
+                          <li
+                            key={rev._id}
+                            className="rounded-lg border border-gray-200 dark:border-gray-700 p-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">⭐ {rev.rating}</span>
+                              <span className="text-xs text-gray-500">
+                                {rev.reviewer?.email || "Anonymous"}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                              {rev.text}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-gray-500">No reviews yet.</p>
+                    )}
+                  </section>
+                </div>
+
+                {/* Right: Ingredients + meta */}
+                <aside className="space-y-6">
+                  <section>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      Ingredients
+                    </h3>
+                    {recipe.ingredients?.length ? (
+                      <ul className="mt-2 list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                        {recipe.ingredients.map((ing, idx) => (
+                          <li key={idx}>{ing}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-gray-500">No ingredients listed.</p>
+                    )}
+                  </section>
+
+                  <section className="text-sm">
+                    <h4 className="text-gray-500">Recipe info</h4>
+                    <div className="mt-2 space-y-1 text-gray-800 dark:text-gray-200">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Chef</span>
+                        <span className="font-medium">{recipe.chef.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Year</span>
+                        <span className="font-medium">{recipe.publishedYear}</span>
+                      </div>
+                      {(recipe.categories?.length ?? 0) > 0 && (
+                        <div>
+                          <span className="text-gray-500">Categories</span>
+                          <p className="mt-1 text-gray-700 dark:text-gray-300">
+                            {(recipe.categories ?? []).join(", ")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </aside>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {userId === recipe.addedBy._id && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onEdit}
+                className="rounded-full bg-white/90 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-800"
+              >
+                <Pencil className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full bg-white/90 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-800"
+                  >
+                    <Trash2 className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. Are you sure?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="absolute top-3 right-3 flex gap-1">
-        <Dialog open={openDetails} onOpenChange={setOpenDetails}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Info className="w-5 h-5 text-gray-600 hover:text-indigo-600" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-purple-800 dark:text-pink-300">
-                {recipe.title}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="mt-4 space-y-3 text-sm text-gray-800 dark:text-gray-100">
-              <p>
-                <strong>Chef:</strong> {recipe.chef.name}
-              </p>
-              <p>
-                <strong>Published:</strong> {recipe.publishedYear}
-              </p>
-              <p>
-                <strong>Categories:</strong>{" "}
-                {(recipe.categories ?? []).join(", ")}
-              </p>
-              <p>
-                <strong>Description:</strong>{" "}
-                {recipe.description || "No description provided"}
-              </p>
+      {/* ----- Content (clean) ----- */}
+      <div className="px-5 pt-4 pb-5">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          {recipe.title}
+        </h3>
 
-              {/* ✅ Ingredients list */}
-              {recipe.ingredients && recipe.ingredients.length > 0 && (
-                <div className="mt-4 border-t pt-3">
-                  <h4 className="font-semibold text-base mb-2">
-                    🥗 Ingredients
-                  </h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                    {recipe.ingredients.map((ing, idx) => (
-                      <li key={idx}>{ing}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          👨‍🍳 {recipe.chef.name}
+          <span className="mx-2">•</span>
+          📅 {recipe.publishedYear}
+        </p>
 
-              {/* ✅ Reviews */}
-              {reviewList.length > 0 && (
-                <div className="mt-4 border-t pt-3">
-                  <h4 className="font-semibold text-base">All Reviews</h4>
-                  <ul className="text-sm space-y-2 mt-2">
-                    {reviewList.map((rev) => (
-                      <li key={rev._id} className="border-b pb-2">
-                        ⭐ {rev.rating} – {rev.text} <br />
-                        <span className="italic text-xs text-gray-500">
-                          ({rev.reviewer?.email || "Anonymous"})
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        {(recipe.categories?.length ?? 0) > 0 && (
+          <p className="mt-1 text-xs text-gray-500">
+            {(recipe.categories ?? []).join(", ")}
+          </p>
+        )}
 
-        {userId === recipe.addedBy._id && (
-          <>
-            <Button variant="ghost" size="icon" onClick={onEdit}>
-              <Pencil className="w-5 h-5 text-gray-600 hover:text-yellow-600" />
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="w-5 h-5 text-gray-600 hover:text-red-600" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. Are you sure?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete}>
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
+        {recipe.description && (
+          <p className="mt-3 text-[15px] leading-6 text-gray-700 dark:text-gray-300">
+            {recipe.description}
+          </p>
+        )}
+
+        {userId && (
+          <div className="mt-4">
+            <AddReviewButton recipeId={recipe._id} onSubmit={onReviewSubmit} />
+          </div>
         )}
       </div>
     </div>
