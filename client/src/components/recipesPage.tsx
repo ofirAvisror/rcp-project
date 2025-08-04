@@ -24,6 +24,15 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+  NavigationMenuLink,
+} from "@/components/ui/navigation-menu";
+
 // ✅ Recipe type with imageUrl optional
 export type Recipe = {
   _id: string;
@@ -33,8 +42,9 @@ export type Recipe = {
   categories: string[];
   description?: string;
   ingredients: string[];
-  imageUrl?: string; // <-- fixed: optional everywhere
+  imageUrl?: string;
   addedBy: { _id: string; name: string };
+  averageRating?: number; // ⭐ calculated from reviews
 };
 
 export type Chef = {
@@ -51,7 +61,12 @@ export function RecipesPage() {
   const queryClient = useQueryClient();
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+
+  // filters
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedStars, setSelectedStars] = useState<string>("");
+  const [selectedChef, setSelectedChef] = useState<string>("");
+
   const [activeTab, setActiveTab] = useState<"recipes" | "chefs">("recipes");
 
   // ✅ New Recipe dialog state
@@ -69,7 +84,32 @@ export function RecipesPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch recipes");
-      return (await res.json()).data || [];
+      const recipes = (await res.json()).data || [];
+
+      // ✅ fetch reviews for each recipe and attach averageRating
+      const withRatings = await Promise.all(
+        recipes.map(async (recipe: Recipe) => {
+          try {
+            const revRes = await fetch(
+              `http://localhost:3001/api/recipes/${recipe._id}/reviews`,
+              { credentials: "include" }
+            );
+            if (!revRes.ok) return { ...recipe, averageRating: 0 };
+            const data = await revRes.json();
+            const reviews = data.reviews || [];
+            const avg =
+              reviews.length > 0
+                ? reviews.reduce((acc: number, r: any) => acc + r.rating, 0) /
+                  reviews.length
+                : 0;
+            return { ...recipe, averageRating: avg };
+          } catch {
+            return { ...recipe, averageRating: 0 };
+          }
+        })
+      );
+
+      return withRatings;
     },
     enabled: !!user && activeTab === "recipes",
   });
@@ -88,7 +128,7 @@ export function RecipesPage() {
       if (!res.ok) throw new Error("Failed to fetch chefs");
       return (await res.json()).data || [];
     },
-    enabled: !!user && activeTab === "chefs",
+    enabled: !!user,
   });
 
   // --- Categories
@@ -96,11 +136,23 @@ export function RecipesPage() {
     return Array.from(new Set(recipes.flatMap((r) => r.categories)));
   }, [recipes]);
 
+  // --- Filtered recipes
   const filteredRecipes = useMemo(() => {
-    return selectedCategory
-      ? recipes.filter((r) => r.categories.includes(selectedCategory))
-      : recipes;
-  }, [recipes, selectedCategory]);
+    return recipes.filter((r) => {
+      let ok = true;
+      if (selectedCategory && !r.categories.includes(selectedCategory))
+        ok = false;
+      if (selectedChef && r.chef.name !== selectedChef) ok = false;
+      if (selectedStars) {
+        const stars = r.averageRating ?? 0;
+        if (selectedStars === "gt4" && !(stars > 4)) ok = false;
+        if (selectedStars === "gt3" && !(stars > 3)) ok = false;
+        if (selectedStars === "gt2" && !(stars > 2)) ok = false;
+        if (selectedStars === "lt2" && !(stars < 2)) ok = false;
+      }
+      return ok;
+    });
+  }, [recipes, selectedCategory, selectedStars, selectedChef]);
 
   // --- Delete recipe
   const handleDelete = async () => {
@@ -167,32 +219,126 @@ export function RecipesPage() {
         )}
       </div>
 
-      {/* Category Filters */}
-      {activeTab === "recipes" && allCategories.length > 0 && (
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Button
-            className={`rounded-full px-4 py-1 text-sm ${
-              selectedCategory === ""
-                ? "bg-purple-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
-            }`}
-            onClick={() => setSelectedCategory("")}
-          >
-            All
-          </Button>
-          {allCategories.map((cat) => (
-            <Button
-              key={cat}
-              className={`rounded-full px-4 py-1 text-sm ${
-                selectedCategory === cat
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
-              }`}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </Button>
-          ))}
+      {/* ✅ Three filter NavBars */}
+      {activeTab === "recipes" && (
+        <div className="flex flex-wrap gap-4 mb-8">
+          {/* Categories */}
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-purple-600 text-white">
+                  Categories
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
+                  <ul>
+                    <li>
+                      <NavigationMenuLink
+                        className={`block px-3 py-1 rounded cursor-pointer ${
+                          selectedCategory === ""
+                            ? "bg-purple-600 text-white"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => setSelectedCategory("")}
+                      >
+                        All
+                      </NavigationMenuLink>
+                    </li>
+                    {allCategories.map((cat) => (
+                      <li key={cat}>
+                        <NavigationMenuLink
+                          className={`block px-3 py-1 rounded cursor-pointer ${
+                            selectedCategory === cat
+                              ? "bg-purple-600 text-white"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                          }`}
+                          onClick={() => setSelectedCategory(cat)}
+                        >
+                          {cat}
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {/* Stars */}
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-purple-600 text-white">
+                  Stars
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
+                  <ul>
+                    <li>
+                      <NavigationMenuLink
+                        onClick={() => setSelectedStars("gt4")}
+                      >
+                        ⭐ More than 4
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink
+                        onClick={() => setSelectedStars("gt3")}
+                      >
+                        ⭐ More than 3
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink
+                        onClick={() => setSelectedStars("gt2")}
+                      >
+                        ⭐ More than 2
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink
+                        onClick={() => setSelectedStars("lt2")}
+                      >
+                        ⭐ Less than 2
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink onClick={() => setSelectedStars("")}>
+                        Reset
+                      </NavigationMenuLink>
+                    </li>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {/* Chefs */}
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-purple-600 text-white">
+                  Chefs
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
+                  <ul>
+                    <li>
+                      <NavigationMenuLink onClick={() => setSelectedChef("")}>
+                        All
+                      </NavigationMenuLink>
+                    </li>
+                    {chefs.map((chef) => (
+                      <li key={chef._id}>
+                        <NavigationMenuLink
+                          onClick={() => setSelectedChef(chef.name)}
+                        >
+                          {chef.name}
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
       )}
 
@@ -221,6 +367,9 @@ export function RecipesPage() {
                       body: JSON.stringify(data),
                     }
                   );
+                  queryClient.invalidateQueries({
+                    queryKey: ["recipes"],
+                  });
                   queryClient.invalidateQueries({
                     queryKey: ["reviews", recipe._id],
                   });

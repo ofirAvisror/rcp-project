@@ -78,7 +78,7 @@ export function RecipeCard({
     : null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative overflow-hidden rounded-2xl border border-purple-500 bg-gradient-to-br from-purple-700 to-purple-900 shadow-lg hover:shadow-xl transition-shadow">
       {/* ----- Image with floating actions ----- */}
       <div className="relative">
         {recipe.imageUrl ? (
@@ -86,11 +86,11 @@ export function RecipeCard({
             src={recipe.imageUrl}
             alt={recipe.title}
             loading="lazy"
-            className="w-full h-56 object-cover"
+            className="w-full h-56 object-cover rounded-t-2xl"
           />
         ) : (
-          <div className="w-full h-56 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-gray-400">
+          <div className="w-full h-56 bg-purple-600 flex items-center justify-center rounded-t-2xl">
+            <div className="flex items-center gap-2 text-purple-300">
               <ImageOff className="w-5 h-5" />
               <span className="text-sm">No image</span>
             </div>
@@ -99,7 +99,7 @@ export function RecipeCard({
 
         {/* Rating badge */}
         {averageRating && (
-          <div className="absolute top-3 left-3 text-xs font-semibold bg-white/90 dark:bg-gray-900/80 text-gray-800 dark:text-gray-100 px-2 py-1 rounded shadow-sm">
+          <div className="absolute top-3 left-3 text-xs font-semibold bg-white/90 text-purple-900 px-2 py-1 rounded shadow-sm">
             ⭐ {averageRating}/5
           </div>
         )}
@@ -108,13 +108,21 @@ export function RecipeCard({
         <div className="absolute top-3 right-3 flex items-center gap-1">
           <Dialog open={openDetails} onOpenChange={setOpenDetails}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full bg-white/90 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-800">
-                <Info className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full bg-white/90 hover:bg-white"
+              >
+                <Info className="w-5 h-5 text-purple-900" />
               </Button>
             </DialogTrigger>
 
-            {/* ---------- INFO DIALOG (clean recipe layout) ---------- */}
+            {/* ---------- INFO DIALOG ---------- */}
             <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-xl bg-white dark:bg-gray-900">
+              <DialogHeader>
+                <DialogTitle>{recipe.title}</DialogTitle>
+              </DialogHeader>
+
               {/* Hero */}
               <div className="relative">
                 {recipe.imageUrl ? (
@@ -128,15 +136,16 @@ export function RecipeCard({
                   <div className="w-full h-60 bg-gray-200 dark:bg-gray-800" />
                 )}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-5 pb-4 pt-10">
-                  <h2 className="text-2xl font-bold text-white">{recipe.title}</h2>
+                  <h2 className="text-2xl font-bold text-white">
+                    {recipe.title}
+                  </h2>
                   <p className="mt-1 text-xs text-white/90">
                     👨‍🍳 {recipe.chef.name}
                     <span className="mx-2">•</span>
                     📅 {recipe.publishedYear}
                     {averageRating && (
                       <>
-                        <span className="mx-2">•</span>
-                        ⭐ {averageRating}/5
+                        <span className="mx-2">•</span>⭐ {averageRating}/5
                       </>
                     )}
                   </p>
@@ -168,7 +177,9 @@ export function RecipeCard({
                             className="rounded-lg border border-gray-200 dark:border-gray-700 p-3"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium">⭐ {rev.rating}</span>
+                              <span className="text-sm font-medium">
+                                ⭐ {rev.rating}
+                              </span>
                               <span className="text-xs text-gray-500">
                                 {rev.reviewer?.email || "Anonymous"}
                               </span>
@@ -180,7 +191,9 @@ export function RecipeCard({
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-2 text-sm text-gray-500">No reviews yet.</p>
+                      <p className="mt-2 text-sm text-gray-500">
+                        No reviews yet.
+                      </p>
                     )}
                   </section>
                 </div>
@@ -198,7 +211,9 @@ export function RecipeCard({
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-2 text-sm text-gray-500">No ingredients listed.</p>
+                      <p className="mt-2 text-sm text-gray-500">
+                        No ingredients listed.
+                      </p>
                     )}
                   </section>
 
@@ -211,7 +226,9 @@ export function RecipeCard({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Year</span>
-                        <span className="font-medium">{recipe.publishedYear}</span>
+                        <span className="font-medium">
+                          {recipe.publishedYear}
+                        </span>
                       </div>
                       {(recipe.categories?.length ?? 0) > 0 && (
                         <div>
@@ -234,9 +251,9 @@ export function RecipeCard({
                 variant="ghost"
                 size="icon"
                 onClick={onEdit}
-                className="rounded-full bg-white/90 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-800"
+                className="rounded-full bg-white/90 hover:bg-white"
               >
-                <Pencil className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                <Pencil className="w-5 h-5 text-purple-900" />
               </Button>
 
               <AlertDialog>
@@ -244,9 +261,9 @@ export function RecipeCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full bg-white/90 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-800"
+                    className="rounded-full bg-white/90 hover:bg-white"
                   >
-                    <Trash2 className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <Trash2 className="w-5 h-5 text-purple-900" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -258,7 +275,9 @@ export function RecipeCard({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+                    <AlertDialogAction onClick={onDelete}>
+                      Delete
+                    </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -269,27 +288,13 @@ export function RecipeCard({
 
       {/* ----- Content (clean) ----- */}
       <div className="px-5 pt-4 pb-5">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="text-2xl font-extrabold text-white tracking-wide leading-tight">
           {recipe.title}
         </h3>
 
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+        <p className="mt-1 text-lg font-semibold text-purple-300 tracking-wide">
           👨‍🍳 {recipe.chef.name}
-          <span className="mx-2">•</span>
-          📅 {recipe.publishedYear}
         </p>
-
-        {(recipe.categories?.length ?? 0) > 0 && (
-          <p className="mt-1 text-xs text-gray-500">
-            {(recipe.categories ?? []).join(", ")}
-          </p>
-        )}
-
-        {recipe.description && (
-          <p className="mt-3 text-[15px] leading-6 text-gray-700 dark:text-gray-300">
-            {recipe.description}
-          </p>
-        )}
 
         {userId && (
           <div className="mt-4">
