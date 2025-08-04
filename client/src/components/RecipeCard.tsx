@@ -78,7 +78,7 @@ export function RecipeCard({
     : null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-purple-500 bg-gradient-to-br from-purple-700 to-purple-900 shadow-lg hover:shadow-xl transition-shadow">
+<div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-shadow">
       {/* ----- Image with floating actions ----- */}
       <div className="relative">
         {recipe.imageUrl ? (
@@ -119,9 +119,7 @@ export function RecipeCard({
 
             {/* ---------- INFO DIALOG ---------- */}
             <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-xl bg-white dark:bg-gray-900">
-              <DialogHeader>
-                <DialogTitle>{recipe.title}</DialogTitle>
-              </DialogHeader>
+              
 
               {/* Hero */}
               <div className="relative">
@@ -292,9 +290,10 @@ export function RecipeCard({
           {recipe.title}
         </h3>
 
-        <p className="mt-1 text-lg font-semibold text-purple-300 tracking-wide">
-          👨‍🍳 {recipe.chef.name}
-        </p>
+        <p className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-400 tracking-wide">
+  👨‍🍳 {recipe.chef.name}
+</p>
+
 
         {userId && (
           <div className="mt-4">

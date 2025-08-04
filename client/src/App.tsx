@@ -1,15 +1,30 @@
 import { Header } from "@/components/Header";
 import { AuthPage } from "@/components/AuthPage";
 import { useAuth } from "./components/AuthContext";
-import { RecipesPage } from "./components/RecipesPage"; // תוקן השם והנתיב
+import { RecipesPage } from "./components/recipesPage";
+import bgImage from "./img/ing.jpg"; // ← ייבוא התמונה מתוך src/img
 
 function App() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-700 to-pink-500">
+<div
+  className="min-h-screen bg-repeat-y bg-top"
+  style={{
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: "cover",
+    backgroundRepeat: "repeat-y",
+    backgroundPosition: "top",
+  }}
+>
+
+
+
+
       <Header />
-      <main className="p-6">{user ? <RecipesPage /> : <AuthPage />}</main>
+      <main className="p-6">
+        {user ? <RecipesPage /> : <AuthPage />}
+      </main>
     </div>
   );
 }

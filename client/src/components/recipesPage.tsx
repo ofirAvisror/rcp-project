@@ -174,15 +174,17 @@ export function RecipesPage() {
       {/* Header + Tabs */}
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-6">
-          <h1 className="text-4xl font-extrabold text-purple-700 dark:text-pink-300">
-            🍽️ My Recipes
-          </h1>
+          <h1 className="text-4xl font-extrabold text-amber-800 dark:text-amber-300">
+  🍽️ My Recipes
+</h1>
+
+          {/* Tabs (warm, dark) */}
           <div className="flex gap-2">
             <Button
               className={`rounded-full px-6 py-2 ${
                 activeTab === "recipes"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-white"
+                  ? "bg-amber-800 text-white"
+                  : "bg-stone-700 text-white/90 hover:bg-stone-600"
               }`}
               onClick={() => setActiveTab("recipes")}
             >
@@ -191,8 +193,8 @@ export function RecipesPage() {
             <Button
               className={`rounded-full px-6 py-2 ${
                 activeTab === "chefs"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-white"
+                  ? "bg-amber-800 text-white"
+                  : "bg-stone-700 text-white/90 hover:bg-stone-600"
               }`}
               onClick={() => setActiveTab("chefs")}
             >
@@ -205,7 +207,7 @@ export function RecipesPage() {
         {user && activeTab === "recipes" && (
           <Dialog open={openNewRecipe} onOpenChange={setOpenNewRecipe}>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5 py-2 flex items-center gap-2">
+              <Button className="bg-amber-800 hover:bg-amber-700 text-white rounded-full px-5 py-2 flex items-center gap-2">
                 <Plus className="w-4 h-4" /> New Recipe
               </Button>
             </DialogTrigger>
@@ -226,7 +228,7 @@ export function RecipesPage() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-purple-600 text-white">
+                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-amber-800 text-white">
                   Categories
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
@@ -235,8 +237,8 @@ export function RecipesPage() {
                       <NavigationMenuLink
                         className={`block px-3 py-1 rounded cursor-pointer ${
                           selectedCategory === ""
-                            ? "bg-purple-600 text-white"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-amber-700 text-white"
+                            : "hover:bg-stone-200 dark:hover:bg-stone-800"
                         }`}
                         onClick={() => setSelectedCategory("")}
                       >
@@ -248,8 +250,8 @@ export function RecipesPage() {
                         <NavigationMenuLink
                           className={`block px-3 py-1 rounded cursor-pointer ${
                             selectedCategory === cat
-                              ? "bg-purple-600 text-white"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                              ? "bg-amber-700 text-white"
+                              : "hover:bg-stone-200 dark:hover:bg-stone-800"
                           }`}
                           onClick={() => setSelectedCategory(cat)}
                         >
@@ -267,41 +269,33 @@ export function RecipesPage() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-purple-600 text-white">
+                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-amber-800 text-white">
                   Stars
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
                   <ul>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("gt4")}
-                      >
+                      <NavigationMenuLink className="block px-3 py-1 rounded hover:bg-stone-200 dark:hover:bg-stone-800" onClick={() => setSelectedStars("gt4")}>
                         ⭐ More than 4
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("gt3")}
-                      >
+                      <NavigationMenuLink className="block px-3 py-1 rounded hover:bg-stone-200 dark:hover:bg-stone-800" onClick={() => setSelectedStars("gt3")}>
                         ⭐ More than 3
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("gt2")}
-                      >
+                      <NavigationMenuLink className="block px-3 py-1 rounded hover:bg-stone-200 dark:hover:bg-stone-800" onClick={() => setSelectedStars("gt2")}>
                         ⭐ More than 2
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink
-                        onClick={() => setSelectedStars("lt2")}
-                      >
+                      <NavigationMenuLink className="block px-3 py-1 rounded hover:bg-stone-200 dark:hover:bg-stone-800" onClick={() => setSelectedStars("lt2")}>
                         ⭐ Less than 2
                       </NavigationMenuLink>
                     </li>
                     <li>
-                      <NavigationMenuLink onClick={() => setSelectedStars("")}>
+                      <NavigationMenuLink className="block px-3 py-1 rounded hover:bg-stone-200 dark:hover:bg-stone-800" onClick={() => setSelectedStars("")}>
                         Reset
                       </NavigationMenuLink>
                     </li>
@@ -315,19 +309,22 @@ export function RecipesPage() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-purple-600 text-white">
+                <NavigationMenuTrigger className="px-4 py-2 rounded-full bg-amber-800 text-white">
                   Chefs
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 min-w-[180px]">
                   <ul>
                     <li>
-                      <NavigationMenuLink onClick={() => setSelectedChef("")}>
+                      <NavigationMenuLink className="block px-3 py-1 rounded hover:bg-stone-200 dark:hover:bg-stone-800" onClick={() => setSelectedChef("")}>
                         All
                       </NavigationMenuLink>
                     </li>
                     {chefs.map((chef) => (
                       <li key={chef._id}>
                         <NavigationMenuLink
+                          className={`block px-3 py-1 rounded cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 ${
+                            selectedChef === chef.name ? "bg-amber-700 text-white" : ""
+                          }`}
                           onClick={() => setSelectedChef(chef.name)}
                         >
                           {chef.name}
@@ -429,8 +426,12 @@ export function RecipesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel className="bg-stone-700 text-white hover:bg-stone-600">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction className="bg-red-800 hover:bg-red-700 text-white" onClick={handleDelete}>
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
