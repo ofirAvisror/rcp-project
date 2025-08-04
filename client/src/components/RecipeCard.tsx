@@ -1,4 +1,3 @@
-// RecipeCard.tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AddReviewButton } from "./AddReviewButton";
@@ -55,109 +54,94 @@ export function RecipeCard({
   onReviewSubmit: (data: { text: string; rating: number }) => void;
 }) {
   const [openDetails, setOpenDetails] = useState(false);
-
-  const { data: reviews, isLoading } = useQuery<{ reviews: Review[] }>({
+  const { data: reviews } = useQuery<{ reviews: Review[] }>({
     queryKey: ["reviews", recipe._id],
     queryFn: async () => {
-      const res = await fetch(
-        `http://localhost:3001/api/recipes/${recipe._id}/reviews`,
-        { credentials: "include" }
-      );
+      const res = await fetch(`http://localhost:3001/api/recipes/${recipe._id}/reviews`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch reviews");
       return res.json();
     },
   });
 
+  const reviewList = reviews?.reviews ?? [];
+  const averageRating = reviewList.length
+    ? (reviewList.reduce((acc, r) => acc + r.rating, 0) / reviewList.length).toFixed(1)
+    : null;
+
   return (
-    <div className="relative rounded-2xl bg-white/90 dark:bg-gray-900/80 border border-purple-200 dark:border-gray-700 shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-      <div className="mb-4 space-y-1">
-        <h3 className="text-xl font-bold text-purple-800 dark:text-pink-300">
+    <div className="relative rounded-2xl bg-white/90 dark:bg-gray-900/80 border border-purple-200 dark:border-gray-700 shadow-xl p-6 hover:shadow-2xl transition duration-300">
+      {averageRating && (
+        <div className="absolute top-3 left-3 text-sm text-yellow-600 font-bold bg-yellow-100 dark:bg-yellow-800 px-2 py-1 rounded shadow">
+          ⭐ {averageRating}/4
+        </div>
+      )}
+
+      <div className="mb-4 mt-6 space-y-2">
+        <h3 className="text-2xl font-extrabold text-purple-800 dark:text-pink-300 tracking-tight">
           {recipe.title}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          👨‍🍳{" "}
-          <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-            {recipe.chef.name}
-          </span>{" "}
-          · {recipe.publishedYear}
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          👨‍🍳 <span className="font-semibold text-indigo-600 dark:text-indigo-400">{recipe.chef.name}</span>
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+          Year: {recipe.publishedYear}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-300">
           🏷 Categories: {(recipe.categories ?? []).join(", ")}
         </p>
       </div>
 
-      {/* Review Section */}
-      <div className="mt-3">
-        <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-200 mb-1">
-          🗣 Reviews
-        </h4>
-        {isLoading ? (
-          <p className="text-xs text-gray-500">Loading reviews...</p>
-        ) : reviews?.reviews?.length ? (
-          <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-            {reviews.reviews.map((rev) => (
-              <li key={rev._id} className="border-b pb-1">
-                ⭐ {rev.rating} – {rev.text}{" "}
-                <span className="italic text-xs text-gray-500">
-                  ({rev.reviewer?.email || "Anonymous"})
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-gray-500">No reviews yet</p>
-        )}
-      </div>
-
-      {/* Review Button */}
       {userId && (
         <div className="mt-4">
           <AddReviewButton recipeId={recipe._id} onSubmit={onReviewSubmit} />
         </div>
       )}
 
-      {/* Buttons Top Right */}
       <div className="absolute top-3 right-3 flex gap-1">
-        {/* Info */}
         <Dialog open={openDetails} onOpenChange={setOpenDetails}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="icon">
-              <Info className="w-4 h-4 text-gray-500 hover:text-indigo-500" />
+              <Info className="w-5 h-5 text-gray-600 hover:text-indigo-600" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <DialogHeader>
-              <DialogTitle>{recipe.title}</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-purple-800 dark:text-pink-300">
+                {recipe.title}
+              </DialogTitle>
             </DialogHeader>
-            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-              <p>
-                <strong>Chef:</strong> {recipe.chef.name}
-              </p>
-              <p>
-                <strong>Published:</strong> {recipe.publishedYear}
-              </p>
-              <p>
-                <strong>Categories:</strong>{" "}
-                {(recipe.categories ?? []).join(", ")}
-              </p>
-              <p>
-                <strong>Description:</strong>{" "}
-                {recipe.description || "No description provided"}
-              </p>
+            <div className="mt-4 space-y-3 text-sm text-gray-800 dark:text-gray-100">
+              <p><strong>Chef:</strong> {recipe.chef.name}</p>
+              <p><strong>Published:</strong> {recipe.publishedYear}</p>
+              <p><strong>Categories:</strong> {(recipe.categories ?? []).join(", ")}</p>
+              <p><strong>Description:</strong> {recipe.description || "No description provided"}</p>
+
+              {reviewList.length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <h4 className="font-semibold text-base">All Reviews</h4>
+                  <ul className="text-sm space-y-2 mt-2">
+                    {reviewList.map((rev) => (
+                      <li key={rev._id} className="border-b pb-2">
+                        ⭐ {rev.rating} – {rev.text} <br />
+                        <span className="italic text-xs text-gray-500">({rev.reviewer?.email || "Anonymous"})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Edit + Delete (only if owner) */}
         {userId === recipe.addedBy._id && (
           <>
             <Button variant="ghost" size="icon" onClick={onEdit}>
-              <Pencil className="w-4 h-4 text-gray-500 hover:text-yellow-600" />
+              <Pencil className="w-5 h-5 text-gray-600 hover:text-yellow-600" />
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <Trash2 className="w-4 h-4 text-gray-500 hover:text-red-600" />
+                  <Trash2 className="w-5 h-5 text-gray-600 hover:text-red-600" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -169,9 +153,7 @@ export function RecipeCard({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete}>
-                    Delete
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
