@@ -6,7 +6,8 @@ import { Form } from "@/components/ui/form";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const createRecipeSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -15,12 +16,13 @@ const createRecipeSchema = z.object({
     .string()
     .regex(/^\d{4}$/, "Chef Birth Year must be a valid year (e.g. 1980)")
     .optional()
-    .or(z.literal("")), // מאפשר גם מחרוזת ריקה
+    .or(z.literal("")),
   publishedYear: z
     .string()
     .regex(/^\d{4}$/, "Published year must be a valid year (e.g. 2023)"),
   categories: z.string().min(1, "Categories are required (comma-separated)"),
   description: z.string().min(0).optional(),
+  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type CreateRecipeFormData = z.infer<typeof createRecipeSchema>;
@@ -32,7 +34,9 @@ type Recipe = {
   publishedYear: number;
   categories: string[];
   description?: string;
+  ingredients?: string[];
   addedBy: { _id: string; name: string };
+  imageUrl?: string; // ✅ נוסיף פה
 };
 
 type Props = {
@@ -44,6 +48,12 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
   const queryClient = useQueryClient();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Ingredients state
+  const [ingredients, setIngredients] = useState<string[]>(
+    recipe?.ingredients || []
+  );
+  const [newIngredient, setNewIngredient] = useState("");
+
   const form = useForm<CreateRecipeFormData>({
     resolver: zodResolver(createRecipeSchema),
     defaultValues: {
@@ -53,6 +63,7 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
       publishedYear: "",
       categories: "",
       description: "",
+      imageUrl: "", // ✅ ברירת מחדל ריקה במקום undefined
     },
   });
 
@@ -61,11 +72,13 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
       form.reset({
         title: recipe.title,
         chef: recipe.chef._id,
-        chefBirthYear: "", // מאפס כי בשינוי עריכה השדה לא רלוונטי
+        chefBirthYear: "",
         publishedYear: String(recipe.publishedYear),
         categories: recipe.categories.join(", "),
         description: recipe.description ?? "",
+        imageUrl: recipe.imageUrl ?? "", // ✅ תמיד ערך מוגדר
       });
+      setIngredients(recipe.ingredients || []);
     }
   }, [recipe, form]);
 
@@ -76,16 +89,22 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
         ? `http://localhost:3001/api/recipes/${recipe._id}`
         : `http://localhost:3001/api/recipes`;
 
-      const body = {
+      const body: any = {
         title: data.title,
-        chef: data.chef,
         publishedYear: Number(data.publishedYear),
         categories: data.categories.split(",").map((c) => c.trim()),
         description: data.description || "",
+        ingredients,
+        imageUrl: data.imageUrl?.trim() || "", // ✅ שולחים ל־DB
       };
 
-      if (!recipe && data.chefBirthYear && data.chefBirthYear !== "") {
-        Object.assign(body, { chefBirthYear: Number(data.chefBirthYear) });
+      if (!recipe) {
+        body.chef = data.chef;
+        if (data.chefBirthYear && data.chefBirthYear !== "") {
+          body.chefBirthYear = Number(data.chefBirthYear);
+        }
+      } else {
+        body.chef = recipe.chef._id;
       }
 
       const res = await fetch(url, {
@@ -105,6 +124,7 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recipes"] });
       form.reset();
+      setIngredients([]);
       if (onClose) onClose();
       else {
         setSuccessMessage("✅ Recipe saved successfully!");
@@ -119,6 +139,16 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
 
   const onSubmit = (data: CreateRecipeFormData) => {
     mutation.mutate(data);
+  };
+
+  const handleAddIngredient = () => {
+    if (!newIngredient.trim()) return;
+    setIngredients([...ingredients, newIngredient.trim()]);
+    setNewIngredient("");
+  };
+
+  const handleRemoveIngredient = (ingredient: string) => {
+    setIngredients(ingredients.filter((i) => i !== ingredient));
   };
 
   return (
@@ -142,22 +172,35 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
             type="text"
             placeholder="Recipe title"
           />
-          <FormFieldWrapper
-            control={form.control}
-            name="chef"
-            label="Chef ID or Name"
-            type="text"
-            placeholder="Chef ID or Name"
-          />
-          {!recipe && (
-            <FormFieldWrapper
-              control={form.control}
-              name="chefBirthYear"
-              label="Chef Birth Year (if creating new chef)"
-              type="text"
-              placeholder="e.g. 1980"
-            />
+
+          {!recipe ? (
+            <>
+              <FormFieldWrapper
+                control={form.control}
+                name="chef"
+                label="Chef ID or Name"
+                type="text"
+                placeholder="Chef ID or Name"
+              />
+              <FormFieldWrapper
+                control={form.control}
+                name="chefBirthYear"
+                label="Chef Birth Year (if creating new chef)"
+                type="text"
+                placeholder="e.g. 1980"
+              />
+            </>
+          ) : (
+            <div className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Chef:
+              </p>
+              <p className="text-lg font-semibold text-purple-600 dark:text-pink-300">
+                {recipe.chef.name}
+              </p>
+            </div>
           )}
+
           <FormFieldWrapper
             control={form.control}
             name="publishedYear"
@@ -165,6 +208,14 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
             type="text"
             placeholder="2023"
           />
+          <FormFieldWrapper
+            control={form.control}
+            name="imageUrl"
+            label="Recipe Image URL"
+            type="text"
+            placeholder="https://example.com/myimage.jpg"
+          />
+
           <FormFieldWrapper
             control={form.control}
             name="categories"
@@ -179,6 +230,49 @@ export function CreateRecipeForm({ recipe, onClose }: Props) {
             type="text"
             placeholder="Recipe description / instructions"
           />
+
+          {/* Ingredients Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Ingredients
+            </label>
+            <div className="flex gap-2 mb-3">
+              <Input
+                value={newIngredient}
+                onChange={(e) => setNewIngredient(e.target.value)}
+                placeholder="e.g. 2 cups of flour"
+              />
+              <Button
+                type="button"
+                onClick={handleAddIngredient}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Add
+              </Button>
+            </div>
+
+            {ingredients.length > 0 && (
+              <ul className="space-y-2">
+                {ingredients.map((ing, idx) => (
+                  <li
+                    key={idx}
+                    className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-lg shadow-sm"
+                  >
+                    <span className="text-gray-700 dark:text-gray-200">
+                      {ing}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveIngredient(ing)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <Button
             type="submit"

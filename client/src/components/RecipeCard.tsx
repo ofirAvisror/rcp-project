@@ -37,7 +37,9 @@ type Recipe = {
   publishedYear: number;
   categories: string[];
   description?: string;
+  ingredients: string[]; // ✅ added here
   addedBy: { _id: string; name: string };
+  imageUrl?: string;
 };
 
 export function RecipeCard({
@@ -57,7 +59,10 @@ export function RecipeCard({
   const { data: reviews } = useQuery<{ reviews: Review[] }>({
     queryKey: ["reviews", recipe._id],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:3001/api/recipes/${recipe._id}/reviews`, { credentials: "include" });
+      const res = await fetch(
+        `http://localhost:3001/api/recipes/${recipe._id}/reviews`,
+        { credentials: "include" }
+      );
       if (!res.ok) throw new Error("Failed to fetch reviews");
       return res.json();
     },
@@ -65,7 +70,9 @@ export function RecipeCard({
 
   const reviewList = reviews?.reviews ?? [];
   const averageRating = reviewList.length
-    ? (reviewList.reduce((acc, r) => acc + r.rating, 0) / reviewList.length).toFixed(1)
+    ? (
+        reviewList.reduce((acc, r) => acc + r.rating, 0) / reviewList.length
+      ).toFixed(1)
     : null;
 
   return (
@@ -81,7 +88,10 @@ export function RecipeCard({
           {recipe.title}
         </h3>
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          👨‍🍳 <span className="font-semibold text-indigo-600 dark:text-indigo-400">{recipe.chef.name}</span>
+          👨‍🍳{" "}
+          <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+            {recipe.chef.name}
+          </span>
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-400 italic">
           Year: {recipe.publishedYear}
@@ -96,6 +106,19 @@ export function RecipeCard({
           <AddReviewButton recipeId={recipe._id} onSubmit={onReviewSubmit} />
         </div>
       )}
+      <div className="relative rounded-2xl overflow-hidden bg-white/90 dark:bg-gray-900/80 border border-purple-200 dark:border-gray-700 shadow-xl hover:shadow-2xl transition duration-300">
+        {recipe.imageUrl && (
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            className="w-full h-48 object-cover"
+          />
+        )}
+
+        <div className="p-6">
+          {/* rest of your card content like title, chef, categories, etc. */}
+        </div>
+      </div>
 
       <div className="absolute top-3 right-3 flex gap-1">
         <Dialog open={openDetails} onOpenChange={setOpenDetails}>
@@ -111,11 +134,36 @@ export function RecipeCard({
               </DialogTitle>
             </DialogHeader>
             <div className="mt-4 space-y-3 text-sm text-gray-800 dark:text-gray-100">
-              <p><strong>Chef:</strong> {recipe.chef.name}</p>
-              <p><strong>Published:</strong> {recipe.publishedYear}</p>
-              <p><strong>Categories:</strong> {(recipe.categories ?? []).join(", ")}</p>
-              <p><strong>Description:</strong> {recipe.description || "No description provided"}</p>
+              <p>
+                <strong>Chef:</strong> {recipe.chef.name}
+              </p>
+              <p>
+                <strong>Published:</strong> {recipe.publishedYear}
+              </p>
+              <p>
+                <strong>Categories:</strong>{" "}
+                {(recipe.categories ?? []).join(", ")}
+              </p>
+              <p>
+                <strong>Description:</strong>{" "}
+                {recipe.description || "No description provided"}
+              </p>
 
+              {/* ✅ Ingredients list */}
+              {recipe.ingredients && recipe.ingredients.length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <h4 className="font-semibold text-base mb-2">
+                    🥗 Ingredients
+                  </h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                    {recipe.ingredients.map((ing, idx) => (
+                      <li key={idx}>{ing}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* ✅ Reviews */}
               {reviewList.length > 0 && (
                 <div className="mt-4 border-t pt-3">
                   <h4 className="font-semibold text-base">All Reviews</h4>
@@ -123,7 +171,9 @@ export function RecipeCard({
                     {reviewList.map((rev) => (
                       <li key={rev._id} className="border-b pb-2">
                         ⭐ {rev.rating} – {rev.text} <br />
-                        <span className="italic text-xs text-gray-500">({rev.reviewer?.email || "Anonymous"})</span>
+                        <span className="italic text-xs text-gray-500">
+                          ({rev.reviewer?.email || "Anonymous"})
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -153,7 +203,9 @@ export function RecipeCard({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+                  <AlertDialogAction onClick={onDelete}>
+                    Delete
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

@@ -7,11 +7,11 @@ import User from '../models/User';
 const RecipeController = {
   async create(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { title, chef, publishedYear, categories, description, chefBirthYear } = req.body;
+      const { title, chef, publishedYear, categories, description, chefBirthYear, ingredients } = req.body;
 
       let recipeChef;
 
-      // בדיקה אם chef הוא ObjectId תקין
+      // אם chef הוא ID תקין
       if (/^[0-9a-fA-F]{24}$/.test(chef)) {
         recipeChef = await ChefModel.findById(chef);
       }
@@ -20,7 +20,6 @@ const RecipeController = {
       if (!recipeChef) {
         recipeChef = await ChefModel.findOne({ name: chef });
 
-        // אם לא קיים כלל – צור חדש רק אם birthYear קיים
         if (!recipeChef) {
           if (chefBirthYear === undefined || chefBirthYear === null) {
             res.status(400).json({
@@ -33,20 +32,20 @@ const RecipeController = {
         }
       }
 
-      // בדיקת המשתמש המחובר
       const user = await User.findById(req.user?.userId);
       if (!user) {
         res.status(400).json({ success: false, message: "User not found" });
         return;
       }
 
-      // יצירת מתכון חדש
+      // יצירת מתכון חדש עם חומרים (ingredients)
       const newRecipe = await RecipeModel.create({
         title,
         chef: recipeChef._id,
         publishedYear,
         categories,
         description,
+        ingredients: Array.isArray(ingredients) ? ingredients : [], // שמירה של מערך
         addedBy: user._id,
       });
 
@@ -116,7 +115,7 @@ const RecipeController = {
   async updateRecipe(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { title, chef, publishedYear, categories, description } = req.body;
+      const { title, chef, publishedYear, categories, description, ingredients } = req.body;
 
       const existingRecipe = await RecipeModel.findById(id);
       if (!existingRecipe) {
@@ -124,17 +123,21 @@ const RecipeController = {
         return;
       }
 
-      const recipeChef = await ChefModel.findById(chef);
-      if (!recipeChef) {
-        res.status(400).json({ message: "Invalid chef ID" });
-        return;
+      // אם מגיע ID של שף
+      if (chef && /^[0-9a-fA-F]{24}$/.test(chef)) {
+        const recipeChef = await ChefModel.findById(chef);
+        if (!recipeChef) {
+          res.status(400).json({ message: "Invalid chef ID" });
+          return;
+        }
+        existingRecipe.chef = recipeChef._id;
       }
 
       existingRecipe.title = title;
-      existingRecipe.chef = recipeChef._id;
       existingRecipe.publishedYear = publishedYear;
       existingRecipe.categories = categories;
       existingRecipe.description = description;
+      existingRecipe.ingredients = Array.isArray(ingredients) ? ingredients : existingRecipe.ingredients;
 
       await existingRecipe.save();
 
