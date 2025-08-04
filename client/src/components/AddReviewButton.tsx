@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 type AddReviewButtonProps = {
   recipeId: string;
   onSubmit: (data: { recipeId: string; text: string; rating: number }) => void;
-  className?: string; // מאפשר התאמה חיצונית
+  className?: string;
 };
 
 export function AddReviewButton({
@@ -24,20 +24,25 @@ export function AddReviewButton({
 }: AddReviewButtonProps) {
   const [text, setText] = useState("");
   const [rating, setRating] = useState("1");
+  const [open, setOpen] = useState(false); // ✅ control dialog
 
   const handleSubmit = () => {
     if (!text.trim()) return;
     onSubmit({ recipeId, text, rating: Number(rating) });
     setText("");
     setRating("1");
+    setOpen(false); // ✅ close dialog after submit
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={className || "w-full text-indigo-600 border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10"}
+          className={
+            className ||
+            "w-full text-indigo-600 border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10"
+          }
         >
           📝 Add Review
         </Button>
