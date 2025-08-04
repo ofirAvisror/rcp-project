@@ -1,3 +1,4 @@
+// RecipeCard.tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AddReviewButton } from "./AddReviewButton";
@@ -108,18 +109,14 @@ export function RecipeCard({
         )}
       </div>
 
-      {/* Add Review Button */}
+      {/* Review Button */}
       {userId && (
         <div className="mt-4">
-          <AddReviewButton
-            recipeId={recipe._id}
-            onSubmit={onReviewSubmit}
-            className="w-full bg-indigo-600 text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-indigo-700 transition-colors"
-          />
+          <AddReviewButton recipeId={recipe._id} onSubmit={onReviewSubmit} />
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Buttons Top Right */}
       <div className="absolute top-3 right-3 flex gap-1">
         {/* Info */}
         <Dialog open={openDetails} onOpenChange={setOpenDetails}>
@@ -151,7 +148,7 @@ export function RecipeCard({
           </DialogContent>
         </Dialog>
 
-        {/* Edit & Delete (only if owner) */}
+        {/* Edit + Delete (only if owner) */}
         {userId === recipe.addedBy._id && (
           <>
             <Button variant="ghost" size="icon" onClick={onEdit}>

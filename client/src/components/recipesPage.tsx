@@ -195,7 +195,7 @@ export function RecipesPage() {
               <div key={chef._id} className="border rounded-xl p-6 shadow bg-white dark:bg-gray-900 transition hover:shadow-lg">
                 <h3 className="text-xl font-bold mb-1 text-gray-800 dark:text-white">{chef.name}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">👨‍🍳 Specialty: {chef.specialty}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">📈 Experience: {chef.experienceYears} years</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">📈 Experience years: {chef.experienceYears} </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">🎂 Born: {chef.birthYear}</p>
                 {chef.about && <p className="text-sm mt-2 italic text-gray-500">{chef.about}</p>}
               </div>
